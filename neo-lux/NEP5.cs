@@ -116,7 +116,7 @@ namespace NeoLux
             BigInteger amount = new BigInteger((ulong)value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
-            var response = api.CallContract(from_key, contractHash, "balanceOf", new object[] { sender_address_hash, to_address_hash, amount });
+            var response = api.CallContract(from_key, contractHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
             return response;
         }
     }
