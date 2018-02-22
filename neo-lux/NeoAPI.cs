@@ -227,13 +227,16 @@ namespace NeoLux
                     throw new NeoException($"Not enough {symbol}");
                 }
 
-                var output = new Transaction.Output()
+                if(cost > 0)
                 {
-                    assetID = assetID,
-                    scriptHash = outputHash,
-                    value = cost
-                };
-                outputs.Add(output);
+                    var output = new Transaction.Output()
+                    {
+                        assetID = assetID,
+                        scriptHash = outputHash,
+                        value = cost
+                    };
+                    outputs.Add(output);
+                }
 
                 if (selected > cost)
                 {
