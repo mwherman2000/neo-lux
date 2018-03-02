@@ -80,23 +80,39 @@ namespace NeoLux
             }
         }
 
+        // FIXME - I'm almost sure that this code won't return non-integer balances correctly...
+        private decimal ConvertToDecimal(BigInteger value)
+        {
+            var decs = this.Decimals;
+            while (decs > 0)
+            {
+                value /= 10;
+                decs--;
+            }
+            return (decimal)value;
+        }
+
+        private BigInteger ConvertToBigInt(decimal value)
+        {
+            var decs = this.Decimals;
+            while (decs > 0)
+            {
+                value *= 10;
+                decs--;
+            }
+            return new BigInteger((ulong)value);
+        }
+
         public decimal BalanceOf(string address)
         {
             return BalanceOf(address.GetScriptHashFromAddress());
         }
 
-        // FIXME - I'm almost sure that this code won't return non-integer balances correctly...
         public decimal BalanceOf(byte[] addressHash)
         {
             var response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
             var balance = new BigInteger((byte[])response.result);
-            var decs = this.Decimals;
-            while (decs > 0)
-            {
-                balance /= 10;
-                decs--;
-            }
-            return (decimal)balance;
+            return ConvertToDecimal(balance);
         }
 
         public bool Transfer(KeyPair from_key, string to_address, decimal value)
@@ -106,18 +122,36 @@ namespace NeoLux
 
         public bool Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
-            var decs = this.Decimals;
-            while (decs > 0)
-            {
-                value *= 10;
-                decs--;
-            }
-
-            BigInteger amount = new BigInteger((ulong)value);
+            BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
             var response = api.CallContract(from_key, contractHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
             return response;
+        }
+
+        // optional methods, not all NEP5 support this!
+
+        public decimal Allowance(string from_address, string to_address)
+        {
+            return Allowance(from_address.GetScriptHashFromAddress(), to_address.GetScriptHashFromAddress());
+
+        }
+
+        public decimal Allowance(byte[] from_address_hash, byte[] to_address_hash)
+        {
+            var response = api.TestInvokeScript(contractHash, "allowance", new object[] { from_address_hash, to_address_hash});
+            return ConvertToDecimal((BigInteger) response.result);
+
+        }
+
+        public bool transferFrom(byte[] originator, byte[] from, byte[] to, BigInteger amount)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public bool approve(byte[] originator, byte[] to, BigInteger amount)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
