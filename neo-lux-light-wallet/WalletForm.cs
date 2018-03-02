@@ -46,14 +46,14 @@ namespace neo_lux_light_wallet
 
         private void button1_Click(object sender, EventArgs e)
         {
-            var keyBytes = privateKeyInput.Text.HexToBytes();
-            if (keyBytes.Length == 52)
+            if (privateKeyInput.Text.Length == 52)
             {
                 keyPair = KeyPair.FromWIF(privateKeyInput.Text);
             }
             else
-            if (keyBytes.Length == 32)
+            if (privateKeyInput.Text.Length == 64)
             {
+                var keyBytes = privateKeyInput.Text.HexToBytes();
                 keyPair = new KeyPair(keyBytes);
             }
             else
