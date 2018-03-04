@@ -1,35 +1,76 @@
 ﻿using LunarParser;
-using Neo.Cryptography;
 using NeoLux.Core;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace NeoLux
 {
     public class NeoRPC : NeoAPI
     {
-        public readonly string apiEndpoint;
+        public readonly string url;
+        public readonly int port;
 
-        public NeoRPC(string apiEndpoint)
+        public NeoRPC(string url, int port)
         {
-            this.apiEndpoint = apiEndpoint;
+            this.url = url;
+            this.port = port;
         }
 
-        public static NeoRPC ForMainNet()
+        public override Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false)
         {
-            return new NeoRPC("http://api.wallet.cityofzion.io");
+            var response = QueryRPC("getaccountstate", new object[] { address });
+            var result = new Dictionary<string, decimal>();
+
+            var resultNode = response.GetNode("result");
+            var balances = resultNode.GetNode("balances");
+
+            foreach (var entry in balances.Children)
+            {
+                var assetID = entry.GetString("asset");
+                var amount = entry.GetDecimal("value");
+
+                var symbol = SymbolFromAssetID(assetID);
+
+                result[symbol] = amount;
+            }
+
+            return result;
         }
 
-        public static NeoRPC ForTestNet()
+        public override byte[] GetStorage(string scriptHash, string key)
         {
-            return new NeoRPC("http://testnet-api.wallet.cityofzion.io");
+            throw new NotImplementedException();
         }
 
-        public override InvokeResult TestInvokeScript(byte[] script)
+        public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override bool SendRawTransaction(string hexTx)
+        {
+            var response = QueryRPC("sendrawtransaction", new object[] {hexTx });
+            var result = response.GetBool("result");
+            return result;
+        }
+
+        public override InvokeResult TestInvokeScript(string scriptHash, object[] args)
         {
             var invoke = new InvokeResult();
             invoke.state = null;
 
-            var response = QueryRPC("invokescript", new object[] { script.ByteToHex() });
+            var temp = new object[args.Length + 1];
+            temp[0] = scriptHash;
+            for (int i=0; i<args.Length; i++)
+            {
+                temp[i + 1] = args[i];
+            }
+
+            var response = QueryRPC("invokefunction", temp);
+
             if (response != null)
             {
                 var root = response["result"];
@@ -46,97 +87,6 @@ namespace NeoLux
             return invoke;
         }
 
-        public override bool SendRawTransaction(string hexTx)
-        {
-            var response = QueryRPC("sendrawtransaction", new object[] { hexTx });
-            return response.GetBool("result");
-        }
-
-        public override byte[] GetStorage(string scriptHash, string key)
-        {
-            var result = QueryRPC("getstorage", new object[] { scriptHash, key });
-            if (result == null)
-            {
-                return null;
-            }
-
-            var hex = result.GetString("result");
-            return hex.HexToBytes();
-        }
-
-        public override Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false)
-        {
-            var url = apiEndpoint + "/v2/address/balance/" + address;
-            var response = RequestUtils.Request(RequestType.GET, url);
-
-            var result = new Dictionary<string, decimal>();
-            foreach (var node in response.Children)
-            {
-                if (node.HasNode("balance"))
-                {
-                    var balance = node.GetDecimal("balance");
-                    if (balance > 0)
-                    {
-                        result[node.Name] = balance;
-                    }
-                }
-            }
-
-            if (getTokens)
-            {
-                var info = GetTokenInfo();
-                foreach (var symbol in info.Keys)
-                {
-                    var token = GetToken(symbol);
-                    var balance = token.BalanceOf(address);
-                    if (balance > 0)
-                    {
-                        result[symbol] = balance;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
-        {
-            var url = apiEndpoint + "/v2/address/balance/" + address;
-            var response = RequestUtils.Request(RequestType.GET, url);
-
-            var result = new Dictionary<string, List<UnspentEntry>>();
-            foreach (var node in response.Children)
-            {
-                var child = node.GetNode("unspent");
-                if (child != null)
-                {
-                    List<UnspentEntry> list;
-                    if (result.ContainsKey(node.Name))
-                    {
-                        list = result[node.Name];
-                    }
-                    else
-                    {
-                        list = new List<UnspentEntry>();
-                        result[node.Name] = list;
-                    }
-
-                    foreach (var data in child.Children)
-                    {
-                        var input = new UnspentEntry()
-                        {
-                            txid = data.GetString("txid"),
-                            index = data.GetUInt32("index"),
-                            value = data.GetDecimal("value")
-                        };
-
-                        list.Add(input);
-                    }
-                }
-            }
-            return result;
-        }
-
         public DataNode QueryRPC(string method, object[] _params, int id = 1)
         {
             var paramData = DataNode.CreateArray("params");
@@ -151,14 +101,12 @@ namespace NeoLux
             jsonRpcData.AddField("id", id);
             jsonRpcData.AddField("jsonrpc", "2.0");
 
-            DataNode response;
-            
-            response = RequestUtils.Request(RequestType.GET, apiEndpoint + "/v2/network/best_node");
-            var rpcEndpoint = response.GetString("node");
+            var rpcEndpoint = url + ":" + port;
 
-            response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
+            var response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
 
             return response;
         }
+
     }
 }

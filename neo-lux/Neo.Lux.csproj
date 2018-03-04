@@ -55,6 +55,7 @@
     <Compile Include="NeoAPI.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="NeoEmulator.cs" />
+    <Compile Include="NeoDB.cs" />
     <Compile Include="NeoRPC.cs" />
     <Compile Include="NEP5.cs" />
     <Compile Include="Request.cs" />

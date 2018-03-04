@@ -53,6 +53,30 @@ namespace NeoLux
             }
         }
 
+        public static string SymbolFromAssetID(string assetID)
+        {
+            if (assetID == null)
+            {
+                return null;
+            }
+
+            if (assetID.StartsWith("0x"))
+            {
+                assetID = assetID.Substring(2);
+            }
+
+            var info = GetAssetsInfo();
+            foreach (var entry in info)
+            {
+                if (entry.Value == assetID)
+                {
+                    return entry.Key;
+                }
+            }
+
+            return null;
+        }
+
         private static Dictionary<string, string> _tokenScripts = null;
 
         internal static Dictionary<string, string> GetTokenInfo()
@@ -122,42 +146,99 @@ namespace NeoLux
             return null;
         }
 
-        public abstract InvokeResult TestInvokeScript(byte[] script);
+        public abstract InvokeResult TestInvokeScript(string scriptHash, object[] args);
 
         public InvokeResult TestInvokeScript(string scriptHash, string operation, object[] args)
         {
-            var bytes = GenerateScript(scriptHash, operation, args);
-            return TestInvokeScript(bytes);
+            return TestInvokeScript(scriptHash, new object[] { operation, args });
         }
 
-        public static byte[] GenerateScript(string scriptHash, string operation, object[] args)
+
+        private static void EmitObject(ScriptBuilder sb, object item)
+        {
+            if (item is byte[])
+            {
+                var arr = (byte[])item;
+                sb.EmitPush(arr);
+            }
+            else
+            if (item is object[])
+            {
+                var list = (object[])item;
+
+                for (int index = 0; index < list.Length; index++)
+                {
+                    EmitObject(sb, list[index]);
+                }
+
+                sb.EmitPush(list.Length);
+                sb.Emit(OpCode.PACK);
+            }
+            else
+            if (item == null)
+            {
+                sb.EmitPush("");
+            }
+            else
+            if (item is string)
+            {
+                sb.EmitPush((string)item);
+            }
+            else
+            if (item is bool)
+            {
+                sb.EmitPush((bool)item);
+            }
+            else
+            if (item is BigInteger)
+            {
+                sb.EmitPush((BigInteger)item);
+            }
+            else
+            {
+                throw new Exception("Unsupport contract param: " + item.ToString());
+            }
+        }
+
+        public static byte[] GenerateScript(string scriptHash, object[] args)
         {
             using (var sb = new ScriptBuilder())
             {
-                for (int i = args.Length - 1; i >= 0; i--)
+                var items = new Stack<object>();
+
+                if (args != null)
                 {
-                    sb.EmitPush(args[i]);
+                    foreach (var item in args)
+                    {
+                        items.Push(item);
+                    }
                 }
 
-                var argCount = args.Length;
-                sb.Emit((OpCode)((int)OpCode.PUSHT + argCount - 1));
-
-                sb.Emit(OpCode.PACK);
-
-                sb.EmitPush(operation);
+                while (items.Count > 0)
+                {
+                    var item = items.Pop();
+                    EmitObject(sb, item);
+                }
 
                 var temp = scriptHash.HexToBytes().Reverse().ToArray();
                 sb.EmitAppCall(temp, false);
 
                 var bytes = sb.ToArray();
+
+                string hex = bytes.ByteToHex();
                 return bytes;
             }
         }
 
+        public bool CallContract(KeyPair key, string scriptHash, object[] args)
+        {
+            var bytes = GenerateScript(scriptHash, args);
+            return CallContract(key, scriptHash, bytes);
+        }
+
         public bool CallContract(KeyPair key, string scriptHash, string operation, object[] args)
         {
-            var bytes = GenerateScript(scriptHash, operation, args);
-            return CallContract(key, scriptHash, bytes);
+            return CallContract(key, scriptHash, new object[] { operation, args });
         }
 
         private void GenerateInputsOutputs(KeyPair key, string outputHash, Dictionary<string, decimal> ammounts, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)

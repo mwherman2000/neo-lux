@@ -24,7 +24,7 @@ namespace NeoLux
             throw new System.NotImplementedException();
         }
 
-        public override InvokeResult TestInvokeScript(byte[] script)
+        public override InvokeResult TestInvokeScript(string scriptHash, object[] args)
         {
             throw new System.NotImplementedException();
         }

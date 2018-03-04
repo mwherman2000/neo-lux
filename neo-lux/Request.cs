@@ -17,7 +17,10 @@ namespace NeoLux.Core
             string contents;
 
             switch (kind) {
-                case RequestType.GET: contents = GetWebRequest(url); break;
+                case RequestType.GET:
+                    {
+                        contents = GetWebRequest(url); break;
+                    }
                 case RequestType.POST:
                     {
                         var paramData = data != null ? JSONWriter.WriteToString(data): "{}";
