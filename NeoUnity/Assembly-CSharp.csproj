@@ -53,9 +53,6 @@
   <ItemGroup>
      <Compile Include="Assets\HONETi\Scripts\switch_scenes.cs" />
      <Compile Include="Assets\Scripts\NeoDemo.cs" />
- <Reference Include="Assembly-CSharp-firstpass">
- <HintPath>/Users/fet/wd/phetter/neo-lux/NeoUnity/Library/ScriptAssemblies/Assembly-CSharp-firstpass.dll</HintPath>
- </Reference>
  <Reference Include="UnityEngine.UIAutomation">
  <HintPath>/Applications/Unity/Unity.app/Contents/UnityExtensions/Unity/UIAutomation/UnityEngine.UIAutomation.dll</HintPath>
  </Reference>
@@ -122,6 +119,9 @@
  <Reference Include="UnityEditor.OSXStandalone.Extensions">
  <HintPath>/Applications/Unity/Unity.app/Contents/PlaybackEngines/MacStandaloneSupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
  </Reference>
+ <Reference Include="NEO-Emulator">
+ <HintPath>/Users/fet/wd/phetter/neo-lux/NeoUnity/Assets/Plugins/NEO-Emulator.dll</HintPath>
+ </Reference>
  <Reference Include="UnityEngine.Advertisements">
  <HintPath>/Users/fet/Library/Unity/cache/packages/packages.unity.com/com.unity.ads@2.0.3/UnityEngine.Advertisements.dll</HintPath>
  </Reference>
@@ -142,6 +142,12 @@
  </Reference>
  <Reference Include="UnityEngine.StandardEvents">
  <HintPath>/Users/fet/Library/Unity/cache/packages/packages.unity.com/com.unity.standardevents@1.0.10/UnityEngine.StandardEvents.dll</HintPath>
+ </Reference>
+ <Reference Include="NeoLux">
+ <HintPath>/Users/fet/wd/phetter/neo-lux/NeoUnity/Assets/Plugins/NeoLux.dll</HintPath>
+ </Reference>
+ <Reference Include="LunarParser">
+ <HintPath>/Users/fet/wd/phetter/neo-lux/NeoUnity/Assets/Plugins/LunarParser.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
