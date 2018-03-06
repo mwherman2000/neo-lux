@@ -19,13 +19,21 @@ namespace NeoLux
         {
             get
             {
-                if (_name == null)
+                try
                 {
-                    var response = api.TestInvokeScript(contractHash, "name", new object[] { "" });
-                    _name = System.Text.Encoding.ASCII.GetString((byte[])response.result);
+                    if (_name == null)
+                    {
+                        var response = api.TestInvokeScript(contractHash, "name", new object[] { "" });
+                        _name = System.Text.Encoding.ASCII.GetString((byte[])response.result);
+                    }
+
+                    return _name;
+                }
+                catch
+                {
+                    throw new NeoException("Api did not return a value.");
                 }
 
-                return _name;
             }
         }
 
@@ -49,13 +57,21 @@ namespace NeoLux
         {
             get
             {
-                if (_decimals < 0)
+                try
                 {
-                    var response = api.TestInvokeScript(contractHash, "decimals", new object[] { "" });
-                    _decimals = (BigInteger)response.result;
+                    if (_decimals < 0)
+                    {
+                        var response = api.TestInvokeScript(contractHash, "decimals", new object[] { "" });
+                        _decimals = (BigInteger)response.result;
+                    }
+
+                    return _decimals;
+                }
+                catch
+                {
+                    throw new NeoException("Api did not return a value.");
                 }
 
-                return _decimals;
             }
         }
 
@@ -64,20 +80,29 @@ namespace NeoLux
         {
             get
             {
-                if (_totalSupply < 0)
+                try
                 {
-                    var response = api.TestInvokeScript(contractHash, "totalSupply", new object[] { "" });
-                    _totalSupply = new BigInteger((byte[])response.result);
-
-                    var decs = Decimals;
-                    while (decs>0)
+                    if (_totalSupply < 0)
                     {
-                        _totalSupply /= 10;
-                        decs--;
+                        var response = api.TestInvokeScript(contractHash, "totalSupply", new object[] { "" });
+                        _totalSupply = new BigInteger((byte[])response.result);
+
+                        var decs = Decimals;
+                        while (decs > 0)
+                        {
+                            _totalSupply /= 10;
+                            decs--;
+                        }
                     }
+
+                    return _totalSupply;
+
+                }
+                catch
+                {
+                    throw new NeoException("Api did not return a value.");
                 }
 
-                return _totalSupply;
             }
         }
 
@@ -111,9 +136,16 @@ namespace NeoLux
 
         public decimal BalanceOf(byte[] addressHash)
         {
-            var response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
-            var balance = new BigInteger((byte[])response.result);
-            return ConvertToDecimal(balance);
+            try
+            {
+                var response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
+                var balance = new BigInteger((byte[])response.result);
+                return ConvertToDecimal(balance);
+            }
+            catch
+            {
+                throw new NeoException("Api did not return a value.");
+            }
         }
 
         public bool Transfer(KeyPair from_key, string to_address, decimal value)
@@ -140,8 +172,16 @@ namespace NeoLux
 
         public decimal Allowance(byte[] from_address_hash, byte[] to_address_hash)
         {
-            var response = api.TestInvokeScript(contractHash, "allowance", new object[] { from_address_hash, to_address_hash});
-            return ConvertToDecimal((BigInteger) response.result);
+            var response = api.TestInvokeScript(contractHash, "allowance", new object[] { from_address_hash, to_address_hash });
+
+            try
+            {
+                return ConvertToDecimal((BigInteger)response.result);
+            }
+            catch
+            {
+                throw new NeoException("Api did not return a value.");
+            }
 
         }
 
