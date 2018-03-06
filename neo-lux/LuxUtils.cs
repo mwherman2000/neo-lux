@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Neo.Cryptography;
+using System;
 
 namespace NeoLux
 {
@@ -21,5 +22,13 @@ namespace NeoLux
             var hexValue = val.ToString("X16");
             return reverseHex(("0000000000000000" + hexValue).Substring(hexValue.Length));
         }
+
+        public static byte[] GetScriptHashFromAddress(this string address)
+        {
+            var temp = address.Base58CheckDecode();
+            temp = temp.SubArray(1, 20);
+            return temp;
+        }
+
     }
 }

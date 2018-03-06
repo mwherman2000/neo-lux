@@ -8,7 +8,7 @@ namespace neo_lux_light_wallet
     public partial class WalletForm : Form
     {
         private KeyPair keyPair;
-        private NeoAPI api = NeoRPC.ForTestNet();
+        private NeoAPI api = NeoDB.ForTestNet();
 
 
         public WalletForm()

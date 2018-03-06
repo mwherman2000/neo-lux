@@ -5,6 +5,7 @@ using System.Linq;
 using Neo.Cryptography;
 using Neo.VM;
 using System.Numerics;
+using Neo.Emulator;
 
 namespace NeoLux
 {
@@ -382,7 +383,7 @@ namespace NeoLux
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            var scriptHash = LuxUtils.reverseHex(toAddress.GetScriptHashFromAddress().ToHexString());
+            var scriptHash = LuxUtils.reverseHex(Neo.Emulator.Helper.ToHexString(toAddress.GetScriptHashFromAddress()));
             GenerateInputsOutputs(fromKey, scriptHash, amounts, out inputs, out outputs);
 
             Transaction tx = new Transaction()

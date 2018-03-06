@@ -33,9 +33,9 @@ namespace Neo.Sender
 
             switch (net)
             {
-                case "main": api = NeoRPC.ForMainNet(); break;
-                case "test": api = NeoRPC.ForTestNet(); break;
-                default: api = new NeoRPC(net); break;
+                case "main": api = NeoDB.ForMainNet(); break;
+                case "test": api = NeoDB.ForTestNet(); break;
+                default: api = new NeoDB(net); break;
             }
 
             bool result = false;

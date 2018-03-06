@@ -1,4 +1,5 @@
 ﻿using System;
+
 using Neo.Cryptography;
 
 namespace NeoLux.Demo
@@ -8,7 +9,7 @@ namespace NeoLux.Demo
         static void Main(string[] args)
         {
             // NOTE - You can also create an API instance for a specific private net
-            var api = NeoRPC.ForTestNet();
+            var api = NeoDB.ForTestNet();
 
             // NOTE - Private keys should not be hardcoded in the code, this is just for demonstration purposes!
             var privateKey = "a9e2b5436cab6ff74be2d5c91b8a67053494ab5b454ac2851f872fb0fd30ba5e";
@@ -28,7 +29,7 @@ namespace NeoLux.Demo
             // TestInvokeScript let's us call a smart contract method and get back a result
             // NEP5 https://github.com/neo-project/proposals/issues/3
 
-            api = NeoRPC.ForMainNet();
+            api = NeoDB.ForMainNet();
             var redPulse = api.GetToken("RPX");
 
             // you could also create a NEP5 from a contract script hash

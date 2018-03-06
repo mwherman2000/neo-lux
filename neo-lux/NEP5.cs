@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using Neo.Cryptography;
+using System.Numerics;
 
 namespace NeoLux
 {
