@@ -1,0 +1,12 @@
+{
+  "GAS": {
+    "balance": 0, 
+    "unspent": []
+  }, 
+  "NEO": {
+    "balance": 0, 
+    "unspent": []
+  }, 
+  "address": "AcX4K7zyrrjsr7o7gDtf2AYFvBZKtHZykm", 
+  "net": "TestNet"
+}
