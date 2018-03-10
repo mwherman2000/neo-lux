@@ -123,7 +123,7 @@ namespace NeoLux
 
             if (stack != null)
             {
-                Console.WriteLine("level0:\t" + level.ToString() + "\tName: " + stack.Name + "\tKind: " + stack.Kind.ToString() + "\tChildren: " + stack.ChildCount.ToString());
+                //Console.WriteLine("level0:\t" + level.ToString() + "\tName: " + stack.Name + "\tKind: " + stack.Kind.ToString() + "\tChildren: " + stack.ChildCount.ToString());
                 level++;
                 if (stack.Children.Count() > 0 && stack.Name == "stack")
                 {
@@ -159,7 +159,8 @@ namespace NeoLux
                 string Value = stackChildItem.Value;
                 string type = stackChildItem.GetString("type");
                 string value = stackChildItem.GetString("value");
-                Console.WriteLine("level1:\t" + level.ToString() + "\tName: " + (String.IsNullOrEmpty(Name) ? "<null>" : Name) + "\tKind: " + Kind.ToString() + "\tValue: " + (String.IsNullOrEmpty(Value) ? "<null>" : Value) + "\ttype: " + (String.IsNullOrEmpty(type) ? "<null>" : type) + "\tvalue: " + (String.IsNullOrEmpty(value) ? "<null>" : value) + "\tChildCount: " + stackChildItem.ChildCount.ToString());
+                
+                //Console.WriteLine("level1:\t" + level.ToString() + "\tName: " + (String.IsNullOrEmpty(Name) ? "<null>" : Name) + "\tKind: " + Kind.ToString() + "\tValue: " + (String.IsNullOrEmpty(Value) ? "<null>" : Value) + "\ttype: " + (String.IsNullOrEmpty(type) ? "<null>" : type) + "\tvalue: " + (String.IsNullOrEmpty(value) ? "<null>" : value) + "\tChildCount: " + stackChildItem.ChildCount.ToString());
 
                 object temp = null;
                 switch (Kind)
@@ -199,7 +200,7 @@ namespace NeoLux
                                     }
                                 default:
                                     {
-                                        Console.WriteLine("ParseStack:unknown DataNode stack type: '" + type + "'");
+                                        //Console.WriteLine("ParseStack:unknown DataNode stack type: '" + type + "'");
                                         break;
                                     }
                             }
@@ -213,7 +214,7 @@ namespace NeoLux
                     default:
                         {
                             //throw new ArgumentOutOfRangeException("ParseStack:unknown DataNode stack type: '" + type + "'");
-                            Console.WriteLine("ParseStack:unknown DataNode stack Kind: " + Kind.ToString());
+                            //Console.WriteLine("ParseStack:unknown DataNode stack Kind: " + Kind.ToString());
                             break;
                         }
                 }
