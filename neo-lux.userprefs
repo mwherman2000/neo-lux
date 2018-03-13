@@ -1,0 +1,44 @@
+﻿<Properties StartupConfiguration="{3C5A33B0-C015-4670-BC38-283DA680CC27}|Default">
+  <MonoDevelop.Ide.Workbench ActiveDocument="neo-lux-demo/Program.cs">
+    <Files>
+      <File FileName="neo-lux/API.cs" Line="83" Column="28" />
+      <File FileName="neo-lux/Helper.cs" Line="1" Column="1" />
+      <File FileName="neo-lux/Request.cs" Line="1" Column="1" />
+      <File FileName="neo-lux-demo/Program.cs" Line="7" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="neo-lux" expanded="True">
+            <Node name="Neo.Lux" expanded="True">
+              <Node name="References" expanded="True">
+                <Node name="From Packages" expanded="True" />
+              </Node>
+              <Node name="Packages" expanded="True" />
+            </Node>
+            <Node name="neo-lux-demo" expanded="True">
+              <Node name="References" expanded="True">
+                <Node name="From Packages" expanded="True" />
+              </Node>
+              <Node name="Packages" expanded="True" />
+              <Node name="Properties" expanded="True" />
+              <Node name="Program.cs" selected="True" />
+            </Node>
+            <Node name="neo-sender" expanded="True">
+              <Node name="References" expanded="True" />
+              <Node name="Packages" expanded="True" />
+              <Node name="Properties" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.ItemProperties.neo-lux-demo PreferredExecutionTarget="MonoDevelop.Default" />
+</Properties>

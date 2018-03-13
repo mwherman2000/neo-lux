@@ -118,30 +118,53 @@ namespace NeoLux
         {
             if (stack != null)
             {
-                var item = stack.Children.FirstOrDefault();
-                if (item != null)
+                if (stack.ChildCount == 1)
                 {
-                    var type = item.GetString("type");
-                    var val = item.GetString("value");
-
-                    switch (type)
+                    var item = stack.Children.FirstOrDefault();
+                    if (item != null)
                     {
-                        case "ByteArray":
-                            {
-                                return val.HexToBytes();
-                            }
+                        var type = item.GetString("type");
+                        var val = item.GetString("value");
 
-                        case "Integer":
-                            {
-                                BigInteger intVal;
-                                BigInteger.TryParse(val, out intVal);
-                                return intVal;
-                            }
+                        switch (type)
+                        {
+                            case "ByteArray":
+                                {
+                                    return val.HexToBytes();
+                                }
 
+                            case "Boolean":
+                                {
+                                    return (val.ToLower() == "true");
+                                }
+
+                            case "Integer":
+                                {
+                                    BigInteger intVal;
+                                    BigInteger.TryParse(val, out intVal);
+                                    return intVal;
+                                }
+
+                        }
+
+                        return val;
+                    }
+                }
+                else
+                {
+                    var items = new List<Object>();
+
+                    foreach (var item in stack.Children)
+                    {
+                        var temp = ParseStack(item);
+
+                        items.Add(temp);
                     }
 
-                    return val;
+                    var result = items.ToArray();
+                    return result;
                 }
+
             }
 
             return null;

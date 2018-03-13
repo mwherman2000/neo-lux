@@ -12,3 +12,5 @@ neo-sender/bin/
 neo-sender/obj/
 neo-lux-light-wallet/bin/
 neo-lux-light-wallet/obj/
+Neo-WhiteList/obj/
+Neo-WhiteList/bin/
