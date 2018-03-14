@@ -7,6 +7,10 @@
     "balance": 0, 
     "unspent": []
   }, 
+<<<<<<< HEAD
+  "address": "ARFXDavzvUjvfT9vfeo79mFbyeSux767qu", 
+=======
   "address": "AcX4K7zyrrjsr7o7gDtf2AYFvBZKtHZykm", 
+>>>>>>> 5a1d985bc91919ad432689ab202ac63a728264ff
   "net": "TestNet"
 }
