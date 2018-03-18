@@ -40,7 +40,7 @@ namespace NeoLux
             return result;
         }
 
-        public override byte[] GetStorage(string scriptHash, string key)
+        public override byte[] GetStorage(string scriptHash, byte[] key)
         {
             throw new NotImplementedException();
         }

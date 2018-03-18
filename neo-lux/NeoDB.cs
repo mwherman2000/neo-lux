@@ -59,9 +59,9 @@ namespace NeoLux
             return response.GetBool("result");
         }
 
-        public override byte[] GetStorage(string scriptHash, string key)
+        public override byte[] GetStorage(string scriptHash, byte[] key)
         {
-            var result = QueryRPC("getstorage", new object[] { scriptHash, key });
+            var result = QueryRPC("getstorage", new object[] { scriptHash, key.ByteToHex() });
             if (result == null)
             {
                 return null;
