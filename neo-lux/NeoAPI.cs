@@ -394,7 +394,7 @@ namespace NeoLux
 
         public abstract bool SendRawTransaction(string hexTx);
 
-        public abstract byte[] GetStorage(string scriptHash, string key);
+        public abstract byte[] GetStorage(string scriptHash, byte[] key);
 
         public bool SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
