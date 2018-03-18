@@ -1,10 +1,8 @@
 ﻿using LunarParser;
+using Neo.Emulator.Utils;
 using NeoLux.Core;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NeoLux
 {
@@ -42,7 +40,13 @@ namespace NeoLux
 
         public override byte[] GetStorage(string scriptHash, byte[] key)
         {
-            throw new NotImplementedException();
+            var response = QueryRPC("getstorage", new object[] { key.ByteToHex() });
+            var result = response.GetString("result");
+            if (string.IsNullOrEmpty(result))
+            {
+                return null;
+            }
+            return result.HexToByte();
         }
 
         public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
