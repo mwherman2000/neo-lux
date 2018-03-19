@@ -138,7 +138,7 @@ namespace NeoLux
                 level--;
             }
 
-            if (items.Length > 0)
+            if (items != null && items.Length > 0)
             {
                 results = items[0];
             }
