@@ -61,7 +61,7 @@ For invoking a Smart Contract, e.g.:
 	var myKeys = new KeyPair(privKey);
 	var scriptHash = "de1a53be359e8be9f3d11627bcca40548a2d5bc1"; // the scriptHash of the smart contract you want to use	
 	// for now, contracts must be in the format Main(string operation, object[] args)
-	var api = NeoRPC.ForMainNet();
+	var api = NeoDB.ForMainNet();
 	var result = api.CallContract(myKeys, scriptHash, "registerMailbox", new object[] { "ABCDE", "demo@phantasma.io" });
 ```
 
@@ -72,14 +72,14 @@ For transfering assets (NEO or GAS), e.g.:
 	// can be any valid private key in raw format, for WIF use KeyPair.FromWIF
 	var myKeys = new KeyPair(privKey);
 	// WARNING: For now use test net only, this code is experimental, you could lose real assets if using main net
-	var api = NeoRPC.ForTestNet();
+	var api = NeoDB.ForTestNet();
 	var result = api.SendAsset("AanTL6pTTEdnphXpyPMgb7PSE8ifSWpcXU" /*destination address*/, "GAS", 3 /*amount to send */ , myKeys);
 ```
 
 For getting the balance of an address:
 
 ```c#
-	var api = NeoRPC.ForTestNet();
+	var api = NeoDB.ForTestNet();
 	var balances = api.GetBalancesOf("AYpY8MKiJ9q5Fpt4EeQQmoYRHxdNHzwWHk");
 	foreach (var entry in balances)
 	{
@@ -94,7 +94,7 @@ Neo-Lux allows to abstract interaction with Neo tokens via the NEP5 C# class.
 Here's an example of interaction with a NEP5 token:
 
 ```c#
-	var api = NeoRPC.ForMainNet(); 
+	var api = NeoDB.ForMainNet(); 
 	var redPulse_token = api.GetToken("RPX");	
 	Console.WriteLine($"{redPulse_token.Name} ({redPulse_token.Symbol})");
 	Console.WriteLine($"Total Supply: {redPulse_token.TotalSupply} ({redPulse_token.Symbol})");
@@ -110,7 +110,7 @@ You can also instantiate a NEP5 token from a script hash.
 Look up the script hashes [here](https://neotracker.io/browse/asset/1) or use your own if you're developing your own NEP5 token.
 
 ```c#
-	var api = NeoRPC.ForMainNet(); 	
+	var api = NeoDB.ForMainNet(); 	
 	var redPulse_contractHash = "ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9";
 	var redPulse_token = new NEP5(api, redPulse_contractHash);
 ```	
