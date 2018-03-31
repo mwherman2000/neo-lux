@@ -5,8 +5,7 @@ using System.Linq;
 using Neo.Cryptography;
 using Neo.VM;
 using System.Numerics;
-using Neo.Emulator;
-using System.Diagnostics;
+using Neo.Emulation;
 
 namespace NeoLux
 {
@@ -22,7 +21,7 @@ namespace NeoLux
     {
         public string state;
         public decimal gasSpent;
-        public object result;
+        public object[] result;
     }
 
     public abstract class NeoAPI
@@ -95,7 +94,15 @@ namespace NeoLux
                 AddToken("TNC", "08e8c4400f1af2c20c28e0018f29535eb85d15b6");
                 AddToken("CPX", "45d493a6f73fa5f404244a5fb8472fc014ca5885");
                 AddToken("ACAT", "7f86d61ff377f1b12e589a5907152b57e2ad9a7a");
-                AddToken("NRV", "2e25d2127e0240c6deaf35394702feb236d4d7fc");
+                AddToken("NRV", "a721d5893480260bd28ca1f395f2c465d0b5b1c2");
+                AddToken("THOR", "67a5086bac196b67d5fd20745b0dc9db4d2930ed");
+                AddToken("RHT", "2328008e6f6c7bd157a342e789389eb034d9cbc4");
+                AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6");
+                AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd");
+                AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917");
+                AddToken("", "");
+                
+
             }
 
             return _tokenScripts;
@@ -116,122 +123,69 @@ namespace NeoLux
         }
 
         private static int level = 0;
-        protected static object ParseStack(DataNode stack)
+        protected static object[] ParseStack(DataNode stack)
         {
-            object results = null;
-            object[] items = null;
-
             if (stack != null)
             {
+                var items = new List<object>();
+
                 //Console.WriteLine("level0:\t" + level.ToString() + "\tName: " + stack.Name + "\tKind: " + stack.Kind.ToString() + "\tChildren: " + stack.ChildCount.ToString());
-                level++;
                 if (stack.Children.Count() > 0 && stack.Name == "stack")
                 {
-                    foreach (var stackChild in stack.Children)
+                    foreach (var child in stack.Children)
                     {
-                        if (stackChild.ChildCount >= 1)
-                        {
-                            items = ParseStackItems(stackChild.Children);
-                        }
+                        var item = ParseStackItems(child);
+                        items.Add(item);
                     }
                 }
-                level--;
+
+                return items.ToArray();
             }
 
-            if (items != null && items.Length > 0)
-            {
-                results = items[0];
-            }
-
-            return results;
+            return null;
         }
 
-        protected static object[] ParseStackItems(IEnumerable<DataNode> stackItems)
+        protected static object ParseStackItems(DataNode stackItem)
         {
-            object[] results = null;
+            var type = stackItem.GetString("type");
+            var value = stackItem.GetString("value");
 
-            level++;
-            var items = new List<object>();
-            foreach (DataNode stackChildItem in stackItems)
+            switch (type)
             {
-                string Name = stackChildItem.Name;
-                NodeKind Kind = stackChildItem.Kind;
-                string Value = stackChildItem.Value;
-                string type = stackChildItem.GetString("type");
-                string value = stackChildItem.GetString("value");
-                
-                //Console.WriteLine("level1:\t" + level.ToString() + "\tName: " + (String.IsNullOrEmpty(Name) ? "<null>" : Name) + "\tKind: " + Kind.ToString() + "\tValue: " + (String.IsNullOrEmpty(Value) ? "<null>" : Value) + "\ttype: " + (String.IsNullOrEmpty(type) ? "<null>" : type) + "\tvalue: " + (String.IsNullOrEmpty(value) ? "<null>" : value) + "\tChildCount: " + stackChildItem.ChildCount.ToString());
+                case "ByteArray":
+                    {
+                        return value.HexToBytes();
+                    }
 
-                object temp = null;
-                switch (Kind)
-                {
-                    case NodeKind.String:
-                        {
-                            // TODO
-                            break;
-                        }
-                    case NodeKind.Object:
-                        {
-                            switch (type)
-                            {
-                                case "ByteArray":
-                                    {
-                                        temp = value.HexToBytes();
-                                        break;
-                                    }
+                case "Boolean":
+                    {
+                        return (value.ToLower() == "true");
+                    }
 
-                                case "Boolean":
-                                    {
-                                        temp = (value.ToLower() == "true");
-                                        break;
-                                    }
-
-                                case "Integer":
-                                    {
-                                        BigInteger intVal;
-                                        BigInteger.TryParse(value, out intVal);
-                                        temp = intVal;
-                                        break;
-                                    }
-                                case "Array": // Type
-                                    {
-                                        temp = ParseStackItems(stackChildItem.Children);
-                                        break;
-                                    }
-                                default:
-                                    {
-                                        //Console.WriteLine("ParseStack:unknown DataNode stack type: '" + type + "'");
-                                        break;
-                                    }
-                            }
-                            break;
-                        }
-                    case NodeKind.Array:
+                case "Integer":
+                    {
+                        BigInteger intVal;
+                        BigInteger.TryParse(value, out intVal);
+                        return intVal;
+                    }
+                case "Array": // Type
+                    {
+                        var items = new List<object>();
+                        foreach (var child in stackItem.Children)
                         {
-                            temp = ParseStackItems(stackChildItem.Children);
-                            break;
+                            var item = ParseStackItems(child);
+                            items.Add(item);
                         }
-                    default:
-                        {
-                            //throw new ArgumentOutOfRangeException("ParseStack:unknown DataNode stack type: '" + type + "'");
-                            //Console.WriteLine("ParseStack:unknown DataNode stack Kind: " + Kind.ToString());
-                            break;
-                        }
-                }
-
-                if (temp == null)
-                {
-                    // Do nothing
-                }
-                else
-                {
-                    items.Add(temp);
-                }
+                        return items.ToArray();
+                    }
+                default:
+                    {
+                        //Console.WriteLine("ParseStack:unknown DataNode stack type: '" + type + "'");
+                        break;
+                    }
             }
-            results = items.ToArray();
-            level--;
 
-            return results;
+            return null;
         }
 
         public abstract InvokeResult TestInvokeScript(string scriptHash, object[] args);
@@ -470,7 +424,7 @@ namespace NeoLux
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            var scriptHash = LuxUtils.reverseHex(Neo.Emulator.Helper.ToHexString(toAddress.GetScriptHashFromAddress()));
+            var scriptHash = LuxUtils.reverseHex(Neo.Emulation.Helper.ToHexString(toAddress.GetScriptHashFromAddress()));
             GenerateInputsOutputs(fromKey, scriptHash, amounts, out inputs, out outputs);
 
             Transaction tx = new Transaction()

@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo-WhiteListActivator", "N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "neo-lux-demo-npc", "neo-lux-demo-npc\neo-lux-demo-npc.csproj", "{D8D76F82-AB3C-4F5B-9E42-ED4936D79EB7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "neo-lux-experimental", "neo-lux-experimental\neo-lux-experimental.csproj", "{693F45FB-A174-418B-BD8F-431D833C0E9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{D8D76F82-AB3C-4F5B-9E42-ED4936D79EB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8D76F82-AB3C-4F5B-9E42-ED4936D79EB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8D76F82-AB3C-4F5B-9E42-ED4936D79EB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{693F45FB-A174-418B-BD8F-431D833C0E9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{693F45FB-A174-418B-BD8F-431D833C0E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{693F45FB-A174-418B-BD8F-431D833C0E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{693F45FB-A174-418B-BD8F-431D833C0E9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

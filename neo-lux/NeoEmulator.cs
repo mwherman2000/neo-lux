@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using Neo.Cryptography;
-using Neo.Emulator.API;
+using Neo.Emulation.API;
 
 namespace NeoLux
 {

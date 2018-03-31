@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Neo.Cryptography;
-using Neo.Emulator;
+using Neo.Emulation;
 
 namespace NeoLux.WhiteList
 {
@@ -54,8 +54,13 @@ namespace NeoLux.WhiteList
 #if !MANUAL
             do
             {
-                Console.Write("Enter whitelist file name: ");
+                Console.Write("Enter whitelist file name or NEO address: ");
                 fileName = Console.ReadLine();
+
+                if (!fileName.Contains("."))
+                {
+                    break;
+                }
 
                 if (File.Exists(fileName))
                 {
@@ -63,7 +68,18 @@ namespace NeoLux.WhiteList
                 }
             } while (true);
 
-            var lines = File.ReadAllLines(fileName);
+            List<string> lines;
+
+            if (fileName.Contains("."))
+            {
+                lines = File.ReadAllLines(fileName).ToList();
+            }
+            else
+            {
+                lines = new List<string>() { fileName };
+            }
+
+            
 #endif
 
 #if FILTER
@@ -73,6 +89,9 @@ namespace NeoLux.WhiteList
             int skip = 0;
             int add = 0;
             int errors = 0;
+
+            var removed = new List<string>();
+
 #if MANUAL
             while (true)
 #else
@@ -91,6 +110,7 @@ namespace NeoLux.WhiteList
                 if (line.Length != 34 || !line.StartsWith("A"))
                 {
                     skip++;
+                    removed.Add(temp);
                     //Console.WriteLine("Invalid address");
                     continue;
                 }
@@ -104,11 +124,12 @@ namespace NeoLux.WhiteList
                     for (int i=1; i<=100; i++)
                     {
                         var p = api.TestInvokeScript(scriptHash, new object[] { "checkWhitelist", new object[] { hash } });
-                        var state = System.Text.Encoding.UTF8.GetString((byte[])p.result);
+                        var state = System.Text.Encoding.UTF8.GetString((byte[])p.result[0]);
                         Console.WriteLine(state=="on"?"Done": "Retrying...");
 
                         if (state == "on")
                         {
+                            removed.Add(temp);
                             break;
                         }
 

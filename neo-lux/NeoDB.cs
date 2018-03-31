@@ -1,6 +1,6 @@
 ﻿using LunarParser;
 using Neo.Cryptography;
-using Neo.Emulator;
+using Neo.Emulation;
 using NeoLux.Core;
 using System.Collections.Generic;
 

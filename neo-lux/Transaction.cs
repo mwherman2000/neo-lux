@@ -1,5 +1,5 @@
 ﻿using Neo.Cryptography;
-using Neo.Emulator;
+using Neo.Emulation;
 using System;
 using System.Text;
 
@@ -89,7 +89,7 @@ namespace NeoLux
             if (tx.type == 0xd1)
             {
                 result.Append(num2VarInt(tx.script.Length));
-                result.Append(Neo.Emulator.Helper.ToHexString(tx.script));
+                result.Append(Neo.Emulation.Helper.ToHexString(tx.script));
                 if (tx.version >= 1)
                 {
                     result.Append(LuxUtils.num2fixed8(tx.gas));

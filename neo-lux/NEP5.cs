@@ -24,7 +24,7 @@ namespace NeoLux
                     if (_name == null)
                     {
                         var response = api.TestInvokeScript(contractHash, "name", new object[] { "" });
-                        _name = System.Text.Encoding.ASCII.GetString((byte[])response.result);
+                        _name = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
                     }
 
                     return _name;
@@ -45,7 +45,7 @@ namespace NeoLux
                 if (_symbol == null)
                 {
                     var response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
-                    _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result);
+                    _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
                 }
 
                 return _symbol;
@@ -62,7 +62,7 @@ namespace NeoLux
                     if (_decimals < 0)
                     {
                         var response = api.TestInvokeScript(contractHash, "decimals", new object[] { "" });
-                        _decimals = (BigInteger)response.result;
+                        _decimals = (BigInteger)response.result[0];
                     }
 
                     return _decimals;
@@ -85,7 +85,7 @@ namespace NeoLux
                     if (_totalSupply < 0)
                     {
                         var response = api.TestInvokeScript(contractHash, "totalSupply", new object[] { "" });
-                        _totalSupply = new BigInteger((byte[])response.result);
+                        _totalSupply = new BigInteger((byte[])response.result[0]);
 
                         var decs = Decimals;
                         while (decs > 0)
@@ -139,7 +139,7 @@ namespace NeoLux
             try
             {
                 var response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
-                var balance = new BigInteger((byte[])response.result);
+                var balance = new BigInteger((byte[])response.result[0]);
                 return ConvertToDecimal(balance);
             }
             catch
@@ -176,7 +176,7 @@ namespace NeoLux
 
             try
             {
-                return ConvertToDecimal((BigInteger)response.result);
+                return ConvertToDecimal((BigInteger)response.result[0]);
             }
             catch
             {
