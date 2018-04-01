@@ -7,4 +7,4 @@ install:
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner  
 script:
   - xbuild /p:Configuration=Release neo-lux.sln
-  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./MyProject.Tests/bin/Release/MyProject.Tests.dll  
+  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./Neo.Lux.Tests/bin/Release/Neo.Lux.Tests.dll  

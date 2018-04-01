@@ -122,14 +122,12 @@ namespace Neo.Lux
             }
         }
 
-        private static int level = 0;
         protected static object[] ParseStack(DataNode stack)
         {
             if (stack != null)
             {
                 var items = new List<object>();
 
-                //Console.WriteLine("level0:\t" + level.ToString() + "\tName: " + stack.Name + "\tKind: " + stack.Kind.ToString() + "\tChildren: " + stack.ChildCount.ToString());
                 if (stack.Children.Count() > 0 && stack.Name == "stack")
                 {
                     foreach (var child in stack.Children)
