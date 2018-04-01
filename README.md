@@ -51,7 +51,7 @@ Unity 			| Working
 Import the package:
 
 ```c#
-using NeoLux;
+using Neo.Lux;
 ```
 
 For invoking a Smart Contract, e.g.:
