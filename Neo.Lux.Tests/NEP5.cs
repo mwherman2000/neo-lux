@@ -23,6 +23,13 @@ namespace Neo.Lux.Tests
         }
 
         [Test]
+        public void GetName()
+        {
+            var name = token.Name;
+            Assert.IsTrue(name == "Red Pulse Token");
+        }
+
+        [Test]
         public void GetDecimals()
         {
             var decimals = token.Decimals;

@@ -4,7 +4,7 @@ mono:
   - 5.4.1
 install:
   - nuget restore neo-lux.sln
-  - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner  
+  - nuget install NUnit.Runners -Version 3.2.0 -OutputDirectory testrunner
 script:
   - xbuild /p:Configuration=Release neo-lux.sln
   - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./Neo.Lux.Tests/bin/Release/Neo.Lux.Tests.dll  
