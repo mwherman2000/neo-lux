@@ -1,7 +1,7 @@
 ﻿using Neo.Cryptography;
 using System.Numerics;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public class NEP5
     {

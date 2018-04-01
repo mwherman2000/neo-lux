@@ -1,7 +1,7 @@
 ﻿using Neo.Cryptography;
 using System;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public static class LuxUtils
     {

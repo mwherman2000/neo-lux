@@ -2,7 +2,7 @@
 using Neo.Cryptography;
 using Neo.Emulation.API;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public class NeoEmulator : NeoAPI
     {

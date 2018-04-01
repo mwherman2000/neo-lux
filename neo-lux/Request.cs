@@ -2,7 +2,7 @@
 using LunarParser.JSON;
 using System.Net;
 
-namespace NeoLux.Core
+namespace Neo.Lux.Core
 {
     public enum RequestType
     {

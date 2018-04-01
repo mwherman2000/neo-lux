@@ -7,7 +7,7 @@ using Neo.VM;
 using System.Numerics;
 using Neo.Emulation;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public class NeoException : Exception
     {

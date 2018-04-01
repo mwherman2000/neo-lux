@@ -1,10 +1,10 @@
 ﻿using LunarParser;
 using Neo.Emulation.Utils;
-using NeoLux.Core;
+using Neo.Lux.Core;
 using System;
 using System.Collections.Generic;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public class NeoRPC : NeoAPI
     {

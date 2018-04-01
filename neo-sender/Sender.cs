@@ -1,5 +1,5 @@
 ﻿using Neo.Cryptography;
-using NeoLux;
+using Neo.Lux;
 using System;
 
 namespace Neo.Sender

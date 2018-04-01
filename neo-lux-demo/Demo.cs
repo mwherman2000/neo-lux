@@ -1,8 +1,9 @@
 ﻿using System;
 
 using Neo.Cryptography;
+using Neo.Lux;
 
-namespace NeoLux.Demo
+namespace LuxDemo
 {
     class Demo
     {

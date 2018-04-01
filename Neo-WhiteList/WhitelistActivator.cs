@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using Neo.Cryptography;
 using Neo.Emulation;
+using Neo.Lux;
 
 namespace NeoLux.WhiteList
 {

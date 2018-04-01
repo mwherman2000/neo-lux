@@ -3,7 +3,7 @@ using Neo.Emulation;
 using System;
 using System.Text;
 
-namespace NeoLux
+namespace Neo.Lux
 {
     public struct Transaction
     {
