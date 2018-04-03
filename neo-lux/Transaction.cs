@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Neo.Lux
 {
-    public struct Transaction
+    public class Transaction
     {
         public struct Witness
         {
@@ -35,12 +35,12 @@ namespace Neo.Lux
         public Output[] outputs;
         public Witness[] witnesses;
 
-        private static string num2hexstring(long num, int size = 2)
+        protected static string num2hexstring(long num, int size = 2)
         {
             return num.ToString("X" + size);
         }
 
-        private static string num2VarInt(long num)
+        protected static string num2VarInt(long num)
         {
             if (num < 0xfd)
             {
@@ -60,25 +60,25 @@ namespace Neo.Lux
             return "ff" + num2hexstring(num, 8) + num2hexstring(num / (int)Math.Pow(2, 32), 8);
         }
 
-        private static string SerializeWitness(Witness witness)
+        protected static string SerializeWitness(Witness witness)
         {
             var invoLength = num2hexstring((witness.invocationScript.Length / 2));
             var veriLength = num2hexstring(witness.verificationScript.Length / 2);
             return invoLength + witness.invocationScript + veriLength + witness.verificationScript;
         }
 
-        private static string SerializeTransactionInput(Input input)
+        protected static string SerializeTransactionInput(Input input)
         {
             return LuxUtils.reverseHex(input.prevHash) + LuxUtils.reverseHex(num2hexstring(input.prevIndex, 4));
         }
 
-        private static string SerializeTransactionOutput(Output output)
+        protected static string SerializeTransactionOutput(Output output)
         {
             var value = LuxUtils.num2fixed8(output.value);
             return LuxUtils.reverseHex(output.assetID) + value + LuxUtils.reverseHex(output.scriptHash);
         }
 
-        public string SerializeTransaction(bool signed = true)
+        public virtual string SerializeTransaction(bool signed = true)
         {
             var tx = this;
             var result = new StringBuilder();
@@ -124,7 +124,7 @@ namespace Neo.Lux
             return result.ToString().ToLowerInvariant();
         }
 
-        public Transaction Sign(KeyPair key)
+        public void Sign(KeyPair key)
         {
             var tx = this;
             var txdata = tx.SerializeTransaction(false);
@@ -137,8 +137,6 @@ namespace Neo.Lux
             var invocationScript = "40" + signature.ByteToHex();
             var verificationScript = key.signatureScript;
             tx.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
-
-            return tx;
         }
 
     }

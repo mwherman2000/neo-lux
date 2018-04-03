@@ -401,7 +401,7 @@ namespace Neo.Lux
                 outputs = outputs.ToArray()
             };
 
-            tx = tx.Sign(key);
+            tx.Sign(key);
 
             var hexTx = tx.SerializeTransaction(true);
 
@@ -435,7 +435,7 @@ namespace Neo.Lux
                 outputs = outputs.ToArray()
             };
             
-            tx = tx.Sign(fromKey);
+            tx.Sign(fromKey);
 
             var hexTx = tx.SerializeTransaction(true);
 
