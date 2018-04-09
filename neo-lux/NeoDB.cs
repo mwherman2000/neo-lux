@@ -25,7 +25,7 @@ namespace Neo.Lux
             return new NeoDB("http://testnet-api.wallet.cityofzion.io");
         }
 
-        public override InvokeResult TestInvokeScript(string scriptHash, object[] args)
+        public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
         {
             var script = GenerateScript(scriptHash, args);
             return TestInvokeScript(script);

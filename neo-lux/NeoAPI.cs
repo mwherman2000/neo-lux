@@ -122,6 +122,16 @@ namespace Neo.Lux
             }
         }
 
+        public static byte[] GetScriptHashFromString(string hash)
+        {
+            return hash.HexToBytes().Reverse().ToArray();
+        }
+
+        public static string GetStringFromScriptHash(byte[] hash)
+        {
+            return LuxUtils.reverseHex(Emulation.Helper.ToHexString(hash));
+        }
+
         protected static object[] ParseStack(DataNode stack)
         {
             if (stack != null)
@@ -186,9 +196,9 @@ namespace Neo.Lux
             return null;
         }
 
-        public abstract InvokeResult TestInvokeScript(string scriptHash, object[] args);
+        public abstract InvokeResult TestInvokeScript(byte[] scriptHash, object[] args);
 
-        public InvokeResult TestInvokeScript(string scriptHash, string operation, object[] args)
+        public InvokeResult TestInvokeScript(byte[] scriptHash, string operation, object[] args)
         {
             return TestInvokeScript(scriptHash, new object[] { operation, args });
         }
@@ -240,7 +250,7 @@ namespace Neo.Lux
             }
         }
 
-        public static byte[] GenerateScript(string scriptHash, object[] args)
+        public static byte[] GenerateScript(byte[] scriptHash, object[] args)
         {
             using (var sb = new ScriptBuilder())
             {
@@ -259,9 +269,8 @@ namespace Neo.Lux
                     var item = items.Pop();
                     EmitObject(sb, item);
                 }
-
-                var temp = scriptHash.HexToBytes().Reverse().ToArray();
-                sb.EmitAppCall(temp, false);
+                
+                sb.EmitAppCall(scriptHash, false);
 
                 var bytes = sb.ToArray();
 
@@ -270,25 +279,23 @@ namespace Neo.Lux
             }
         }
 
-        public bool CallContract(KeyPair key, string scriptHash, object[] args)
+        public bool CallContract(KeyPair key, byte[] scriptHash, object[] args)
         {
             var bytes = GenerateScript(scriptHash, args);
             return CallContract(key, scriptHash, bytes);
         }
 
-        public bool CallContract(KeyPair key, string scriptHash, string operation, object[] args)
+        public bool CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args)
         {
             return CallContract(key, scriptHash, new object[] { operation, args });
         }
 
-        private void GenerateInputsOutputs(KeyPair key, string outputHash, Dictionary<string, decimal> ammounts, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
+        private void GenerateInputsOutputs(KeyPair key, byte[] outputHash, Dictionary<string, decimal> ammounts, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
         {
             if (ammounts == null || ammounts.Count == 0)
             {
                 throw new NeoException("Invalid amount list");
             }
-
-            //var outputHash = toAddress.GetScriptHashFromAddress().ToHexString();
             
             var unspent = GetUnspent(key.address);
 
@@ -353,7 +360,7 @@ namespace Neo.Lux
                     var output = new Transaction.Output()
                     {
                         assetID = assetID,
-                        scriptHash = outputHash,
+                        scriptHash = GetStringFromScriptHash(outputHash),
                         value = cost
                     };
                     outputs.Add(output);
@@ -374,7 +381,7 @@ namespace Neo.Lux
             }
         }
 
-        public bool CallContract(KeyPair key, string scriptHash, byte[] bytes)
+        public bool CallContract(KeyPair key, byte[] scriptHash, byte[] bytes)
         {
             /*var invoke = TestInvokeScript(net, bytes);
             if (invoke.state == null)
@@ -414,15 +421,25 @@ namespace Neo.Lux
 
         public bool SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
-            return SendAsset(fromKey, toAddress, new Dictionary<string, decimal>() { {symbol, amount }});
+            return SendAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
         }
 
         public bool SendAsset(KeyPair fromKey, string toAddress, Dictionary<string, decimal> amounts)
         {
+            if (String.Equals(fromKey.address, toAddress, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new NeoException("Source and dest addresses are the same");
+            }
+
+            var toScriptHash = toAddress.GetScriptHashFromAddress();
+            return SendAsset(fromKey, toScriptHash, amounts);
+        }
+
+        public bool SendAsset(KeyPair fromKey, byte[] scriptHash, Dictionary<string, decimal> amounts)
+        {
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            var scriptHash = LuxUtils.reverseHex(Neo.Emulation.Helper.ToHexString(toAddress.GetScriptHashFromAddress()));
             GenerateInputsOutputs(fromKey, scriptHash, amounts, out inputs, out outputs);
 
             Transaction tx = new Transaction()
@@ -434,7 +451,7 @@ namespace Neo.Lux
                 inputs = inputs.ToArray(),
                 outputs = outputs.ToArray()
             };
-            
+
             tx.Sign(fromKey);
 
             var hexTx = tx.SerializeTransaction(true);
@@ -454,6 +471,42 @@ namespace Neo.Lux
             var signedTx = tx.signTransaction(unsignedTx, account.privateKey);
             var hexTx = tx.serializeTransaction(signedTx);
             return queryRPC(net, "sendrawtransaction", new object[] { hexTx }, 4);*/
+        }
+
+        public bool WithdrawAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
+        {
+            return WithdrawAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
+        }
+
+        public bool WithdrawAsset(KeyPair toKey, string fromAddress, Dictionary<string, decimal> amounts)
+        {
+            if (String.Equals(toKey.address, fromAddress, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new NeoException("Source and dest addresses are the same");
+            }
+
+            List<Transaction.Input> inputs;
+            List<Transaction.Output> outputs;
+
+            var scriptHash = fromAddress.GetScriptHashFromAddress();
+
+            GenerateInputsOutputs(toKey, scriptHash, amounts, out inputs, out outputs);
+
+            Transaction tx = new Transaction()
+            {
+                type = 128,
+                version = 0,
+                script = null,
+                gas = -1,
+                inputs = inputs.ToArray(),
+                outputs = outputs.ToArray()
+            };
+
+            tx.Sign(toKey);
+
+            var hexTx = tx.SerializeTransaction(true);
+
+            return SendRawTransaction(hexTx);
         }
 
         public Dictionary<string, decimal> GetBalancesOf(KeyPair key, bool getTokens = false)

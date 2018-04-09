@@ -57,7 +57,7 @@ namespace Neo.Lux
             throw new System.NotImplementedException();
         }
 
-        public override InvokeResult TestInvokeScript(string scriptHash, object[] args)
+        public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
         {
             throw new System.NotImplementedException();
         }

@@ -61,13 +61,13 @@ namespace Neo.Lux
             return result;
         }
 
-        public override InvokeResult TestInvokeScript(string scriptHash, object[] args)
+        public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
         {
             var invoke = new InvokeResult();
             invoke.state = null;
 
             var temp = new object[args.Length + 1];
-            temp[0] = scriptHash;
+            temp[0] = NeoAPI.GetStringFromScriptHash(scriptHash);
             for (int i=0; i<args.Length; i++)
             {
                 temp[i + 1] = args[i];

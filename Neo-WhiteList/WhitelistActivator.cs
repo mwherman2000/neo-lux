@@ -19,7 +19,7 @@ namespace NeoLux.WhiteList
             var api = NeoDB.ForMainNet();
 
             string privateKey;
-            string scriptHash;
+            byte[] scriptHash;
 
             do
             {
@@ -35,15 +35,16 @@ namespace NeoLux.WhiteList
             do
             {
                 Console.Write("Enter contract script hash: ");
-                scriptHash = Console.ReadLine();
+                var temp = Console.ReadLine();
 
-                if (scriptHash.StartsWith("0x"))
+                if (temp.StartsWith("0x"))
                 {
-                    scriptHash = scriptHash.Substring(2);
+                    temp = temp.Substring(2);
                 }
 
-                if (scriptHash.Length == 40)
+                if (temp.Length == 40)
                 {
+                    scriptHash = NeoAPI.GetScriptHashFromString(temp);
                     break;
                 }
             } while (true);

@@ -37,15 +37,6 @@
             this.balancePage = new System.Windows.Forms.TabPage();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.transferPage = new System.Windows.Forms.TabPage();
-            this.withdrawPage = new System.Windows.Forms.TabPage();
-            this.button3 = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.label6 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.button2 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.toAddressBox = new System.Windows.Forms.TextBox();
@@ -54,6 +45,15 @@
             this.amountLb = new System.Windows.Forms.Label();
             this.amountBox = new System.Windows.Forms.TextBox();
             this.assetComboBox = new System.Windows.Forms.ComboBox();
+            this.withdrawPage = new System.Windows.Forms.TabPage();
+            this.withdrawButton = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.withdrawToAddress = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.withdrawFromAddress = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.withdrawAmount = new System.Windows.Forms.TextBox();
+            this.withdrawAssetComboBox = new System.Windows.Forms.ComboBox();
             this.tabs.SuspendLayout();
             this.loginPage.SuspendLayout();
             this.balancePage.SuspendLayout();
@@ -163,91 +163,6 @@
             this.transferPage.Text = "Transfer";
             this.transferPage.UseVisualStyleBackColor = true;
             // 
-            // withdrawPage
-            // 
-            this.withdrawPage.Controls.Add(this.button3);
-            this.withdrawPage.Controls.Add(this.label4);
-            this.withdrawPage.Controls.Add(this.textBox1);
-            this.withdrawPage.Controls.Add(this.label5);
-            this.withdrawPage.Controls.Add(this.textBox2);
-            this.withdrawPage.Controls.Add(this.label6);
-            this.withdrawPage.Controls.Add(this.textBox3);
-            this.withdrawPage.Controls.Add(this.comboBox1);
-            this.withdrawPage.Location = new System.Drawing.Point(4, 22);
-            this.withdrawPage.Name = "withdrawPage";
-            this.withdrawPage.Padding = new System.Windows.Forms.Padding(3);
-            this.withdrawPage.Size = new System.Drawing.Size(419, 256);
-            this.withdrawPage.TabIndex = 3;
-            this.withdrawPage.Text = "Withdraw";
-            this.withdrawPage.UseVisualStyleBackColor = true;
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(169, 207);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(92, 23);
-            this.button3.TabIndex = 16;
-            this.button3.Text = "Send";
-            this.button3.UseVisualStyleBackColor = true;
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(20, 132);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(20, 13);
-            this.label4.TabIndex = 15;
-            this.label4.Text = "To";
-            // 
-            // textBox1
-            // 
-            this.textBox1.Location = new System.Drawing.Point(23, 148);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(376, 20);
-            this.textBox1.TabIndex = 14;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(20, 83);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(30, 13);
-            this.label5.TabIndex = 13;
-            this.label5.Text = "From";
-            // 
-            // textBox2
-            // 
-            this.textBox2.Location = new System.Drawing.Point(23, 99);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(376, 20);
-            this.textBox2.TabIndex = 12;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(110, 27);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(43, 13);
-            this.label6.TabIndex = 11;
-            this.label6.Text = "Amount";
-            // 
-            // textBox3
-            // 
-            this.textBox3.Location = new System.Drawing.Point(113, 43);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(100, 20);
-            this.textBox3.TabIndex = 10;
-            this.textBox3.Text = "0";
-            // 
-            // comboBox1
-            // 
-            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(219, 43);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(100, 21);
-            this.comboBox1.TabIndex = 9;
-            // 
             // button2
             // 
             this.button2.Location = new System.Drawing.Point(169, 207);
@@ -286,6 +201,7 @@
             // 
             this.fromAddressBox.Location = new System.Drawing.Point(23, 99);
             this.fromAddressBox.Name = "fromAddressBox";
+            this.fromAddressBox.ReadOnly = true;
             this.fromAddressBox.Size = new System.Drawing.Size(376, 20);
             this.fromAddressBox.TabIndex = 12;
             // 
@@ -314,6 +230,93 @@
             this.assetComboBox.Name = "assetComboBox";
             this.assetComboBox.Size = new System.Drawing.Size(100, 21);
             this.assetComboBox.TabIndex = 9;
+            // 
+            // withdrawPage
+            // 
+            this.withdrawPage.Controls.Add(this.withdrawButton);
+            this.withdrawPage.Controls.Add(this.label4);
+            this.withdrawPage.Controls.Add(this.withdrawToAddress);
+            this.withdrawPage.Controls.Add(this.label5);
+            this.withdrawPage.Controls.Add(this.withdrawFromAddress);
+            this.withdrawPage.Controls.Add(this.label6);
+            this.withdrawPage.Controls.Add(this.withdrawAmount);
+            this.withdrawPage.Controls.Add(this.withdrawAssetComboBox);
+            this.withdrawPage.Location = new System.Drawing.Point(4, 22);
+            this.withdrawPage.Name = "withdrawPage";
+            this.withdrawPage.Padding = new System.Windows.Forms.Padding(3);
+            this.withdrawPage.Size = new System.Drawing.Size(419, 256);
+            this.withdrawPage.TabIndex = 3;
+            this.withdrawPage.Text = "Withdraw";
+            this.withdrawPage.UseVisualStyleBackColor = true;
+            // 
+            // withdrawButton
+            // 
+            this.withdrawButton.Location = new System.Drawing.Point(169, 207);
+            this.withdrawButton.Name = "withdrawButton";
+            this.withdrawButton.Size = new System.Drawing.Size(92, 23);
+            this.withdrawButton.TabIndex = 16;
+            this.withdrawButton.Text = "Withdraw";
+            this.withdrawButton.UseVisualStyleBackColor = true;
+            this.withdrawButton.Click += new System.EventHandler(this.withdrawButton_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(20, 132);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(20, 13);
+            this.label4.TabIndex = 15;
+            this.label4.Text = "To";
+            // 
+            // withdrawToAddress
+            // 
+            this.withdrawToAddress.Location = new System.Drawing.Point(23, 148);
+            this.withdrawToAddress.Name = "withdrawToAddress";
+            this.withdrawToAddress.ReadOnly = true;
+            this.withdrawToAddress.Size = new System.Drawing.Size(376, 20);
+            this.withdrawToAddress.TabIndex = 14;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(20, 83);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(30, 13);
+            this.label5.TabIndex = 13;
+            this.label5.Text = "From";
+            // 
+            // withdrawFromAddress
+            // 
+            this.withdrawFromAddress.Location = new System.Drawing.Point(23, 99);
+            this.withdrawFromAddress.Name = "withdrawFromAddress";
+            this.withdrawFromAddress.Size = new System.Drawing.Size(376, 20);
+            this.withdrawFromAddress.TabIndex = 12;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(110, 27);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(43, 13);
+            this.label6.TabIndex = 11;
+            this.label6.Text = "Amount";
+            // 
+            // withdrawAmount
+            // 
+            this.withdrawAmount.Location = new System.Drawing.Point(113, 43);
+            this.withdrawAmount.Name = "withdrawAmount";
+            this.withdrawAmount.Size = new System.Drawing.Size(100, 20);
+            this.withdrawAmount.TabIndex = 10;
+            this.withdrawAmount.Text = "0";
+            // 
+            // withdrawAssetComboBox
+            // 
+            this.withdrawAssetComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.withdrawAssetComboBox.FormattingEnabled = true;
+            this.withdrawAssetComboBox.Location = new System.Drawing.Point(219, 43);
+            this.withdrawAssetComboBox.Name = "withdrawAssetComboBox";
+            this.withdrawAssetComboBox.Size = new System.Drawing.Size(100, 21);
+            this.withdrawAssetComboBox.TabIndex = 9;
             // 
             // WalletForm
             // 
@@ -360,14 +363,14 @@
         private System.Windows.Forms.TextBox amountBox;
         private System.Windows.Forms.ComboBox assetComboBox;
         private System.Windows.Forms.TabPage withdrawPage;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button withdrawButton;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox withdrawToAddress;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox withdrawFromAddress;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.TextBox withdrawAmount;
+        private System.Windows.Forms.ComboBox withdrawAssetComboBox;
     }
 }
 

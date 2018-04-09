@@ -5,10 +5,15 @@ namespace Neo.Lux
 {
     public class NEP5
     {
-        private readonly string contractHash;
+        private readonly byte[] contractHash;
         private readonly NeoAPI api;
 
-        public NEP5(NeoAPI api, string contractHash)
+        public NEP5(NeoAPI api, string contractHash) :  this(api, NeoAPI.GetScriptHashFromString(contractHash))
+        {
+
+        }
+
+        public NEP5(NeoAPI api, byte[] contractHash)
         {
             this.api = api;
             this.contractHash = contractHash;

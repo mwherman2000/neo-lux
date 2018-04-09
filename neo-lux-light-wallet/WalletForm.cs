@@ -35,6 +35,13 @@ namespace neo_lux_light_wallet
             }
             assetComboBox.SelectedIndex = 0;
 
+            withdrawAssetComboBox.Items.Clear();
+            foreach (var symbol in NeoAPI.AssetSymbols)
+            {
+                withdrawAssetComboBox.Items.Add(symbol);
+            }
+            withdrawAssetComboBox.SelectedIndex = 0;
+
             fromAddressBox.ReadOnly = true;
         }
 
@@ -81,6 +88,7 @@ namespace neo_lux_light_wallet
             }
 
             fromAddressBox.Text = keyPair.address;
+            withdrawToAddress.Text = keyPair.address;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -101,6 +109,26 @@ namespace neo_lux_light_wallet
             }
 
             api.SendAsset(keyPair, toAddressBox.Text, symbol, amount);
+        }
+
+        private void withdrawButton_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(withdrawFromAddress.Text))
+            {
+                MessageBox.Show("Please insert source address");
+                return;
+            }
+
+            var symbol = withdrawAssetComboBox.SelectedItem.ToString();
+
+            int amount = int.Parse(withdrawAmount.Text);
+            if (amount <= 0)
+            {
+                MessageBox.Show("Please insert a valid amount of " + symbol);
+                return;
+            }
+
+            api.WithdrawAsset(keyPair, withdrawFromAddress.Text, symbol, amount);
         }
     }
 }
