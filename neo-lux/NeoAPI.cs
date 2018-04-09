@@ -388,7 +388,6 @@ namespace Neo.Lux
 
             decimal gasCost = invoke.gasSpent;*/
 
-
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
             var gasCost = 0;
@@ -407,7 +406,7 @@ namespace Neo.Lux
 
             tx.Sign(key);
 
-            var hexTx = tx.SerializeTransaction(true);
+            var hexTx = tx.Serialize(true);
 
             return SendRawTransaction(hexTx);
         }
@@ -451,7 +450,7 @@ namespace Neo.Lux
 
             tx.Sign(fromKey);
 
-            var hexTx = tx.SerializeTransaction(true);
+            var hexTx = tx.Serialize(true);
 
             return SendRawTransaction(hexTx);
 
@@ -501,7 +500,7 @@ namespace Neo.Lux
 
             tx.Sign(toKey);
 
-            var hexTx = tx.SerializeTransaction(true);
+            var hexTx = tx.Serialize(true);
 
             return SendRawTransaction(hexTx);
         }
