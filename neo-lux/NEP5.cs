@@ -153,12 +153,12 @@ namespace Neo.Lux
             }
         }
 
-        public bool Transfer(KeyPair from_key, string to_address, decimal value)
+        public Transaction Transfer(KeyPair from_key, string to_address, decimal value)
         {
             return Transfer(from_key, to_address.GetScriptHashFromAddress(), value);
         }
 
-        public bool Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
+        public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
             BigInteger amount = ConvertToBigInt(value);
 
@@ -190,12 +190,12 @@ namespace Neo.Lux
 
         }
 
-        public bool transferFrom(byte[] originator, byte[] from, byte[] to, BigInteger amount)
+        public Transaction TransferFrom(byte[] originator, byte[] from, byte[] to, BigInteger amount)
         {
             throw new System.NotImplementedException();
         }
 
-        public bool approve(byte[] originator, byte[] to, BigInteger amount)
+        public Transaction Approve(byte[] originator, byte[] to, BigInteger amount)
         {
             throw new System.NotImplementedException();
         }

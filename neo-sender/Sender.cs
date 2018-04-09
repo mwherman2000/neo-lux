@@ -38,19 +38,19 @@ namespace Neo.Sender
                 default: api = new NeoDB(net); break;
             }
 
-            bool result = false;
+            Transaction tx = null;
 
             try
             {
                 if (api.IsToken(symbol))
                 {
                     var token = api.GetToken(symbol);
-                    result = token.Transfer(fromKey, outputAddress, amount);
+                    tx = token.Transfer(fromKey, outputAddress, amount);
                 }
                 else
                 if (api.IsAsset(symbol))
                 {
-                    result = api.SendAsset(fromKey, outputAddress, symbol, amount);
+                    tx = api.SendAsset(fromKey, outputAddress, symbol, amount);
                 }
                 else
                 {
@@ -64,7 +64,7 @@ namespace Neo.Sender
                 Environment.Exit(-1);
             }
 
-            Console.WriteLine("Transaction result: " +result);
+            Console.WriteLine("Transaction hash: " + tx.Hash);
         }
     }
 }

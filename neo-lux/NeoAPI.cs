@@ -279,13 +279,13 @@ namespace Neo.Lux
             }
         }
 
-        public bool CallContract(KeyPair key, byte[] scriptHash, object[] args)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args)
         {
             var bytes = GenerateScript(scriptHash, args);
             return CallContract(key, scriptHash, bytes);
         }
 
-        public bool CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args)
         {
             return CallContract(key, scriptHash, new object[] { operation, args });
         }
@@ -378,7 +378,7 @@ namespace Neo.Lux
             }
         }
 
-        public bool CallContract(KeyPair key, byte[] scriptHash, byte[] bytes)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes)
         {
             /*var invoke = TestInvokeScript(net, bytes);
             if (invoke.state == null)
@@ -408,19 +408,20 @@ namespace Neo.Lux
 
             var hexTx = tx.Serialize(true);
 
-            return SendRawTransaction(hexTx);
+            var ok = SendRawTransaction(hexTx);
+            return ok ? tx : null;
         }
 
         public abstract bool SendRawTransaction(string hexTx);
 
         public abstract byte[] GetStorage(string scriptHash, byte[] key);
 
-        public bool SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
+        public Transaction SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
             return SendAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
         }
 
-        public bool SendAsset(KeyPair fromKey, string toAddress, Dictionary<string, decimal> amounts)
+        public Transaction SendAsset(KeyPair fromKey, string toAddress, Dictionary<string, decimal> amounts)
         {
             if (String.Equals(fromKey.address, toAddress, StringComparison.OrdinalIgnoreCase))
             {
@@ -431,7 +432,7 @@ namespace Neo.Lux
             return SendAsset(fromKey, toScriptHash, amounts);
         }
 
-        public bool SendAsset(KeyPair fromKey, byte[] scriptHash, Dictionary<string, decimal> amounts)
+        public Transaction SendAsset(KeyPair fromKey, byte[] scriptHash, Dictionary<string, decimal> amounts)
         {
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
@@ -452,29 +453,16 @@ namespace Neo.Lux
 
             var hexTx = tx.Serialize(true);
 
-            return SendRawTransaction(hexTx);
-
-            /*
-            var account = getAccountFromWIFKey(fromWif);
-            var toScriptHash = getScriptHashFromAddress(toAddress);
-            var balances = getBalance(net, account.address);
-            // TODO: maybe have transactions handle this construction?
-            var intents = _.map(assetAmounts, (v, k) =>
-            {
-                return { assetId: tx.ASSETS[k], value: v, scriptHash: toScriptHash }
-            });
-            var unsignedTx = tx.create.contract(account.publicKeyEncoded, balances, intents);
-            var signedTx = tx.signTransaction(unsignedTx, account.privateKey);
-            var hexTx = tx.serializeTransaction(signedTx);
-            return queryRPC(net, "sendrawtransaction", new object[] { hexTx }, 4);*/
+            var ok = SendRawTransaction(hexTx);
+            return ok ? tx : null;
         }
 
-        public bool WithdrawAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
+        public Transaction WithdrawAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
             return WithdrawAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
         }
 
-        public bool WithdrawAsset(KeyPair toKey, string fromAddress, Dictionary<string, decimal> amounts)
+        public Transaction WithdrawAsset(KeyPair toKey, string fromAddress, Dictionary<string, decimal> amounts)
         {
             if (String.Equals(toKey.address, fromAddress, StringComparison.OrdinalIgnoreCase))
             {
@@ -502,7 +490,8 @@ namespace Neo.Lux
 
             var hexTx = tx.Serialize(true);
 
-            return SendRawTransaction(hexTx);
+            var ok = SendRawTransaction(hexTx);
+            return ok ? tx : null;
         }
 
         public Dictionary<string, decimal> GetBalancesOf(KeyPair key, bool getTokens = false)
