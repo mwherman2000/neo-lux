@@ -57,7 +57,7 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\neo-lux\Neo.Lux.csproj">
+    <ProjectReference Include="..\Neo.Lux\Neo.Lux.csproj">
       <Project>{b3aaa0d3-304e-4408-a052-e3e8a8fa2006}</Project>
       <Name>Neo.Lux</Name>
     </ProjectReference>
