@@ -298,6 +298,8 @@ namespace Neo.Lux
             }
             
             var unspent = GetUnspent(key.address);
+            // filter any asset lists with zero unspent inputs
+            unspent = unspent.Where(pair => pair.Value.Count > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
 
             inputs = new List<Transaction.Input>();
             outputs = new List<Transaction.Output>();
@@ -305,16 +307,11 @@ namespace Neo.Lux
             foreach (var entry in ammounts)
             {
                 var symbol = entry.Key;
-
                 if (!unspent.ContainsKey(symbol))
                 {
                     throw new NeoException($"Not enough {symbol} in address {key.address}");
                 }
-            }
 
-            foreach (var entry in ammounts)
-            {
-                var symbol = entry.Key;
                 var cost = entry.Value;
 
                 string assetID;
@@ -366,7 +363,7 @@ namespace Neo.Lux
                     outputs.Add(output);
                 }
 
-                if (selected > cost)
+                if (selected > cost || cost == 0)
                 {
                     var left = selected - cost;
 
