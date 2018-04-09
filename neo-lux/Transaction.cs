@@ -35,6 +35,8 @@ namespace Neo.Lux
         public Output[] outputs;
         public Witness[] witnesses;
 
+        #region HELPERS
+
         protected static string num2hexstring(long num, int size = 2)
         {
             return num.ToString("X" + size);
@@ -77,8 +79,9 @@ namespace Neo.Lux
             var value = LuxUtils.num2fixed8(output.value);
             return LuxUtils.reverseHex(output.assetID) + value + LuxUtils.reverseHex(output.scriptHash);
         }
+        #endregion
 
-        public virtual string SerializeTransaction(bool signed = true)
+        public virtual string Serialize(bool signed = true)
         {
             var tx = this;
             var result = new StringBuilder();
@@ -127,7 +130,7 @@ namespace Neo.Lux
         public void Sign(KeyPair key)
         {
             var tx = this;
-            var txdata = tx.SerializeTransaction(false);
+            var txdata = tx.Serialize(false);
             var txstr = txdata.HexToBytes();
 
             var privkey = key.PrivateKey;
@@ -139,6 +142,22 @@ namespace Neo.Lux
             tx.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
         }
 
+        private UInt256 _hash = null;
+
+        public UInt256 Hash
+        {
+            get
+            {
+                if (_hash == null)
+                {
+                    var rawTx = this.Serialize(false);
+                    var bytes = rawTx.HexToBytes();
+                    _hash = new UInt256(Crypto.Default.Hash256(bytes));
+                }
+
+                return _hash;
+            }
+        }
     }
 
 }
