@@ -1,4 +1,4 @@
-﻿using NeoLux;
+﻿using Neo.Lux;
 using Neo.Cryptography;
 using System;
 using System.Windows.Forms;
@@ -41,6 +41,7 @@ namespace neo_lux_light_wallet
         private void Form1_Load(object sender, EventArgs e)
         {
             tabs.TabPages.Remove(balancePage);
+            tabs.TabPages.Remove(withdrawPage);
             tabs.TabPages.Remove(transferPage);
         }
 
@@ -65,6 +66,7 @@ namespace neo_lux_light_wallet
 
             tabs.TabPages.Add(balancePage);
             tabs.TabPages.Add(transferPage);
+            tabs.TabPages.Add(withdrawPage);
             tabs.TabPages.Remove(loginPage);
 
             dataGridView1.Rows.Clear();

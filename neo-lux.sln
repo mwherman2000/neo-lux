@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo.Lux", "neo-lux\Neo.Lux.csproj", "{B3AAA0D3-304E-4408-A052-E3E8A8FA2006}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neo.Lux", "neo-lux\Neo.Lux.csproj", "{B3AAA0D3-304E-4408-A052-E3E8A8FA2006}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "neo-lux-demo", "neo-lux-demo\neo-lux-demo.csproj", "{3C5A33B0-C015-4670-BC38-283DA680CC27}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo-WhiteListActivator", "Neo-WhiteList\Neo-WhiteListActivator.csproj", "{1C64403D-3174-4E6F-8549-CE53CC65BE6A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neo.Lux.Tests", "Neo.Lux.Tests\Neo.Lux.Tests.csproj", "{4C1630DA-9EC2-40F3-A35C-CA65606E6C13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "neo-lux-light-wallet", "neo-lux-light-wallet\neo-lux-light-wallet.csproj", "{F7AF1888-BB95-4D7F-95CC-0977CC33820D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{4C1630DA-9EC2-40F3-A35C-CA65606E6C13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C1630DA-9EC2-40F3-A35C-CA65606E6C13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C1630DA-9EC2-40F3-A35C-CA65606E6C13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7AF1888-BB95-4D7F-95CC-0977CC33820D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7AF1888-BB95-4D7F-95CC-0977CC33820D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7AF1888-BB95-4D7F-95CC-0977CC33820D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7AF1888-BB95-4D7F-95CC-0977CC33820D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
