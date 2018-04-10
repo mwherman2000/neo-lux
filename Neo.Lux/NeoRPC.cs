@@ -17,7 +17,7 @@ namespace Neo.Lux
             this.port = port;
         }
 
-        public override Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false)
+        public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
         {
             var response = QueryRPC("getaccountstate", new object[] { address });
             var result = new Dictionary<string, decimal>();

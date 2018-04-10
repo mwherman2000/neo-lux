@@ -71,7 +71,7 @@ namespace Neo.Lux
             return hex.HexToBytes();
         }
 
-        public override Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false)
+        public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
         {
             var url = apiEndpoint + "/v2/address/balance/" + address;
             var response = RequestUtils.Request(RequestType.GET, url);
@@ -85,20 +85,6 @@ namespace Neo.Lux
                     if (balance > 0)
                     {
                         result[node.Name] = balance;
-                    }
-                }
-            }
-
-            if (getTokens)
-            {
-                var info = GetTokenInfo();
-                foreach (var symbol in info.Keys)
-                {
-                    var token = GetToken(symbol);
-                    var balance = token.BalanceOf(address);
-                    if (balance > 0)
-                    {
-                        result[symbol] = balance;
                     }
                 }
             }

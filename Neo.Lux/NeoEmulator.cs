@@ -13,7 +13,7 @@ namespace Neo.Lux
             this.blockchain = new Blockchain();
         }
         
-        public override Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false)
+        public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
         {
             var acc = blockchain.FindAccountByAddress(address);
             var result = new Dictionary<string, decimal>();

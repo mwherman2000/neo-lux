@@ -100,9 +100,6 @@ namespace Neo.Lux
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6");
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd");
                 AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917");
-                AddToken("", "");
-                
-
             }
 
             return _tokenScripts;
@@ -494,12 +491,64 @@ namespace Neo.Lux
             return ok ? tx : null;
         }
 
-        public Dictionary<string, decimal> GetBalancesOf(KeyPair key, bool getTokens = false)
+        public Dictionary<string, decimal> GetBalancesOf(KeyPair key)
         {
-            return GetBalancesOf(key.address, getTokens);
+            return GetBalancesOf(key.address);
         }
 
-        public abstract Dictionary<string, decimal> GetBalancesOf(string address, bool getTokens = false);
+        public Dictionary<string, decimal> GetBalancesOf(string address)
+        {
+            var assets = GetAssetBalancesOf(address);
+            var tokens = GetTokenBalancesOf(address);
+
+            var result = new Dictionary<string, decimal>();
+
+            foreach (var entry in assets)
+            {
+                result[entry.Key] = entry.Value;
+            }
+
+            foreach (var entry in tokens)
+            {
+                result[entry.Key] = entry.Value;
+            }
+
+            return result;
+        }
+
+        public Dictionary<string, decimal> GetTokenBalancesOf(KeyPair key)
+        {
+            return GetTokenBalancesOf(key.address);
+        }
+
+        public Dictionary<string, decimal> GetTokenBalancesOf(string address)
+        {
+            var result = new Dictionary<string, decimal>();
+            foreach (var symbol in TokenSymbols)
+            {
+                var token = GetToken(symbol);
+                try
+                {
+                    var amount = token.BalanceOf(address);
+                    if (amount > 0)
+                    {
+                        result[symbol] = amount;
+                    }
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+            return result;
+        }
+
+        public Dictionary<string, decimal> GetAssetBalancesOf(KeyPair key)
+        {
+            return GetAssetBalancesOf(key.address);
+        }
+
+        public abstract Dictionary<string, decimal> GetAssetBalancesOf(string address);
 
         public bool IsAsset(string symbol)
         {

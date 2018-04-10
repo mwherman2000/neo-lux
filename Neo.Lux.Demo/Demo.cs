@@ -21,7 +21,7 @@ namespace LuxDemo
 
             // it is possible to optionally obtain also token balances with this method
             Console.WriteLine("*Syncing balances...");
-            var balances = api.GetBalancesOf(keys.address, false);
+            var balances = api.GetAssetBalancesOf(keys.address);
             foreach (var entry in balances)
             {
                 Console.WriteLine(entry.Value + " " + entry.Key);
