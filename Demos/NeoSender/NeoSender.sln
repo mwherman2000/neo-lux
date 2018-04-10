@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeoSender", "NeoSender\NeoSender.csproj", "{B3A8AED4-95A5-4655-B8B1-56BDA5D241E4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neo.Lux", "..\..\Neo.Lux\Neo.Lux.csproj", "{742DFA92-23BA-4585-A6B7-F377CA0FCD1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B3A8AED4-95A5-4655-B8B1-56BDA5D241E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A8AED4-95A5-4655-B8B1-56BDA5D241E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A8AED4-95A5-4655-B8B1-56BDA5D241E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A8AED4-95A5-4655-B8B1-56BDA5D241E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{742DFA92-23BA-4585-A6B7-F377CA0FCD1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{742DFA92-23BA-4585-A6B7-F377CA0FCD1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{742DFA92-23BA-4585-A6B7-F377CA0FCD1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{742DFA92-23BA-4585-A6B7-F377CA0FCD1D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {36ABB7D4-183D-45EC-BB82-378200856DE4}
+	EndGlobalSection
+EndGlobal

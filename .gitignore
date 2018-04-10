@@ -11,3 +11,5 @@ neo-lux-experimental/
 .DS_STORE
 Demos/LightWallet/LightWallet/bin/
 Demos/LightWallet/LightWallet/obj/
+Demos/NeoSender/NeoSender/obj/
+Demos/NeoSender/NeoSender/bin/
