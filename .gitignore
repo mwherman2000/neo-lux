@@ -9,3 +9,5 @@ packages/
 */UnityPackageManager/
 neo-lux-experimental/
 .DS_STORE
+Demos/LightWallet/LightWallet/bin/
+Demos/LightWallet/LightWallet/obj/
