@@ -47,15 +47,22 @@ namespace Neo.Lux
         {
             get
             {
-                if (_symbol == null)
+                try
+                {
+                    if (_symbol == null)
                 {
                     var response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
                     _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
                 }
 
                 return _symbol;
+                }
+                catch
+                {
+                throw new NeoException("Api did not return a value.");
             }
         }
+    }
 
         private BigInteger _decimals = -1;
         public BigInteger Decimals
