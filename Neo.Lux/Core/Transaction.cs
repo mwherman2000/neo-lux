@@ -1,9 +1,9 @@
-﻿using Neo.Cryptography;
-using Neo.Emulation;
+﻿using Neo.Lux.Cryptography;
+using Neo.Lux.Utils;
 using System;
 using System.Text;
 
-namespace Neo.Lux
+namespace Neo.Lux.Core
 {
     public class Transaction
     {
@@ -92,7 +92,7 @@ namespace Neo.Lux
             if (tx.type == 0xd1)
             {
                 result.Append(num2VarInt(tx.script.Length));
-                result.Append(Neo.Emulation.Helper.ToHexString(tx.script));
+                result.Append(tx.script.ToHexString());
                 if (tx.version >= 1)
                 {
                     result.Append(LuxUtils.num2fixed8(tx.gas));
@@ -135,7 +135,7 @@ namespace Neo.Lux
 
             var privkey = key.PrivateKey;
             var pubkey = key.PublicKey;
-            var signature = Crypto.Default.Sign(txstr, privkey, pubkey);
+            var signature = CryptoUtils.Sign(txstr, privkey, pubkey);
 
             var invocationScript = "40" + signature.ByteToHex();
             var verificationScript = key.signatureScript;
@@ -152,7 +152,7 @@ namespace Neo.Lux
                 {
                     var rawTx = this.Serialize(false);
                     var bytes = rawTx.HexToBytes();
-                    _hash = new UInt256(Crypto.Default.Hash256(bytes));
+                    _hash = new UInt256(CryptoUtils.Hash256(bytes));
                 }
 
                 return _hash;

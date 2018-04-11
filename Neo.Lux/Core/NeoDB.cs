@@ -1,10 +1,9 @@
 ﻿using LunarParser;
-using Neo.Cryptography;
-using Neo.Emulation;
-using Neo.Lux.Core;
+using Neo.Lux.Cryptography;
+using Neo.Lux.Utils;
 using System.Collections.Generic;
 
-namespace Neo.Lux
+namespace Neo.Lux.Core
 {
     public class NeoDB : NeoAPI
     {

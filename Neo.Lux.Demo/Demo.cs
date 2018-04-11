@@ -1,7 +1,8 @@
 ﻿using System;
 
-using Neo.Cryptography;
-using Neo.Lux;
+using Neo.Lux.Cryptography;
+using Neo.Lux.Core;
+using Neo.Lux.Utils;
 
 namespace LuxDemo
 {

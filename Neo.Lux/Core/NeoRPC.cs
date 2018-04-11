@@ -1,10 +1,10 @@
 ﻿using LunarParser;
-using Neo.Emulation.Utils;
-using Neo.Lux.Core;
+using Neo.Lux.Cryptography;
+using Neo.Lux.Utils;
 using System;
 using System.Collections.Generic;
 
-namespace Neo.Lux
+namespace Neo.Lux.Core
 {
     public class NeoRPC : NeoAPI
     {
@@ -46,7 +46,7 @@ namespace Neo.Lux
             {
                 return null;
             }
-            return result.HexToByte();
+            return result.HexToBytes();
         }
 
         public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)

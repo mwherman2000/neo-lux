@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using Neo.Lux.Core;
+using NUnit.Framework;
 
 namespace Neo.Lux.Tests
 {

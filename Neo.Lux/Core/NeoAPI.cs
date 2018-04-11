@@ -2,12 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Neo.Cryptography;
-using Neo.VM;
+using Neo.Lux.Cryptography;
 using System.Numerics;
-using Neo.Emulation;
+using Neo.Lux.Utils;
 
-namespace Neo.Lux
+namespace Neo.Lux.Core
 {
     public class NeoException : Exception
     {
@@ -126,7 +125,7 @@ namespace Neo.Lux
 
         public static string GetStringFromScriptHash(byte[] hash)
         {
-            return LuxUtils.reverseHex(Emulation.Helper.ToHexString(hash));
+            return LuxUtils.reverseHex(hash.ToHexString());
         }
 
         protected static object[] ParseStack(DataNode stack)
