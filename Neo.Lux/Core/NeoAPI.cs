@@ -199,26 +199,43 @@ namespace Neo.Lux.Core
             return TestInvokeScript(scriptHash, new object[] { operation, args });
         }
 
-
         private static void EmitObject(ScriptBuilder sb, object item)
         {
-            if (item is byte[])
+            if (item is IEnumerable<byte>)
             {
-                var arr = (byte[])item;
-                sb.EmitPush(arr);
-            }
-            else
-            if (item is object[])
-            {
-                var list = (object[])item;
+                var arr = ((IEnumerable<byte>)item).ToArray();
 
-                for (int index = 0; index < list.Length; index++)
+                for (int index = arr.Length - 1; index >= 0; index--)
                 {
-                    EmitObject(sb, list[index]);
+                    sb.EmitPush(arr[index]);
                 }
 
-                sb.EmitPush(list.Length);
+                sb.EmitPush(arr.Length);
                 sb.Emit(OpCode.PACK);
+            }
+            else
+            if (item is IEnumerable<object>)
+            {
+                var arr = ((IEnumerable<object>)item).ToArray();
+
+                for (int index = 0; index < arr.Length; index++)
+                {
+                    EmitObject(sb, arr[index]);
+                }
+
+                sb.EmitPush(arr.Length);
+                sb.Emit(OpCode.PACK);
+
+                /*sb.Emit((OpCode)((int)OpCode.PUSHT + list.Count - 1));
+                sb.Emit(OpCode.NEWARRAY);
+
+                for (int index = 0; index < list.Count; index++)
+                {
+                    sb.Emit(OpCode.DUP); // duplicates array reference into top of stack
+                    sb.EmitPush(new BigInteger(index));
+                    EmitObject(sb, list[index]);
+                    sb.Emit(OpCode.SETITEM);
+                }*/
             }
             else
             if (item == null)
@@ -242,7 +259,7 @@ namespace Neo.Lux.Core
             }
             else
             {
-                throw new Exception("Unsupported contract parameter: " + item.ToString());
+                throw new Exception("Unsupport contract param: " + item.ToString());
             }
         }
 
@@ -271,6 +288,8 @@ namespace Neo.Lux.Core
                 var bytes = sb.ToArray();
 
                 string hex = bytes.ByteToHex();
+                //System.IO.File.WriteAllBytes(@"D:\code\Crypto\neo-debugger-tools\ICO-Template\bin\Debug\inputs.avm", bytes);
+
                 return bytes;
             }
         }
