@@ -225,17 +225,6 @@ namespace Neo.Lux.Core
 
                 sb.EmitPush(arr.Length);
                 sb.Emit(OpCode.PACK);
-
-                /*sb.Emit((OpCode)((int)OpCode.PUSHT + list.Count - 1));
-                sb.Emit(OpCode.NEWARRAY);
-
-                for (int index = 0; index < list.Count; index++)
-                {
-                    sb.Emit(OpCode.DUP); // duplicates array reference into top of stack
-                    sb.EmitPush(new BigInteger(index));
-                    EmitObject(sb, list[index]);
-                    sb.Emit(OpCode.SETITEM);
-                }*/
             }
             else
             if (item == null)
@@ -259,7 +248,7 @@ namespace Neo.Lux.Core
             }
             else
             {
-                throw new Exception("Unsupport contract param: " + item.ToString());
+                throw new Exception("Unsupported contract parameter: " + item.ToString());
             }
         }
 
