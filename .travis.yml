@@ -1,10 +1,10 @@
 language: csharp
-solution: neo-lux.sln
+solution: Neo.Lux.sln
 mono:
   - 5.4.1
 install:
-  - nuget restore neo-lux.sln
+  - nuget restore Neo.Lux.sln
   - nuget install NUnit.Runners -Version 3.2.0 -OutputDirectory testrunner
 script:
-  - xbuild /p:Configuration=Release neo-lux.sln
+  - xbuild /p:Configuration=Release Neo.Lux.sln
   - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./Neo.Lux.Tests/bin/Release/Neo.Lux.Tests.dll  
