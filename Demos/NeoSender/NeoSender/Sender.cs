@@ -59,13 +59,20 @@ namespace Neo.Sender
                     Environment.Exit(-1);
                 }
             }
-            catch 
+            catch (Exception e)
             {
-                Console.WriteLine("Error executing transaction.");
+                Console.WriteLine("Error executing transaction. "+e.Message);
                 Environment.Exit(-1);
             }
 
-            Console.WriteLine("Transaction hash: " + tx.Hash);
+            if (tx != null)
+            {
+                Console.WriteLine("Transaction hash: " + tx.Hash);
+            }
+            else
+            {
+                Console.WriteLine("Transaction not accepted by mempool");
+            }
         }
     }
 }
