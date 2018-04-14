@@ -205,20 +205,14 @@ namespace Neo.Lux.Core
             {
                 var arr = ((IEnumerable<byte>)item).ToArray();
 
-                for (int index = arr.Length - 1; index >= 0; index--)
-                {
-                    sb.EmitPush(arr[index]);
-                }
-
-                sb.EmitPush(arr.Length);
-                sb.Emit(OpCode.PACK);
+                sb.EmitPush(arr);
             }
             else
             if (item is IEnumerable<object>)
             {
                 var arr = ((IEnumerable<object>)item).ToArray();
 
-                for (int index = 0; index < arr.Length; index++)
+                for (int index = arr.Length - 1; index >= 0; index--)
                 {
                     EmitObject(sb, arr[index]);
                 }

@@ -129,8 +129,7 @@ namespace Neo.Lux.Core
 
         public void Sign(KeyPair key)
         {
-            var tx = this;
-            var txdata = tx.Serialize(false);
+            var txdata = this.Serialize(false);
             var txstr = txdata.HexToBytes();
 
             var privkey = key.PrivateKey;
@@ -139,7 +138,7 @@ namespace Neo.Lux.Core
 
             var invocationScript = "40" + signature.ByteToHex();
             var verificationScript = key.signatureScript;
-            tx.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
+            this.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
         }
 
         private UInt256 _hash = null;
