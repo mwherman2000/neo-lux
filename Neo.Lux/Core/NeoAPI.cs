@@ -268,6 +268,13 @@ namespace Neo.Lux.Core
                 
                 sb.EmitAppCall(scriptHash, false);
 
+                var timestamp = DateTime.UtcNow.ToTimestamp();
+                var nonce = BitConverter.GetBytes(timestamp);
+
+                //sb.Emit(OpCode.THROWIFNOT);
+                sb.Emit(OpCode.RET);
+                sb.EmitPush(nonce);
+
                 var bytes = sb.ToArray();
 
                 string hex = bytes.ByteToHex();
