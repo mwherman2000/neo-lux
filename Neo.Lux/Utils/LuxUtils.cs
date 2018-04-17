@@ -241,6 +241,12 @@ namespace Neo.Lux.Utils
                 return new byte[0];
             if (value.Length % 2 == 1)
                 throw new FormatException();
+
+            if (value.StartsWith("0x"))
+            {
+                value = value.Substring(2);
+            }
+
             byte[] result = new byte[value.Length / 2];
             for (int i = 0; i < result.Length; i++)
                 result[i] = byte.Parse(value.Substring(i * 2, 2), NumberStyles.AllowHexSpecifier);
