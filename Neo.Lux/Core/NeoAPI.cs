@@ -199,7 +199,7 @@ namespace Neo.Lux.Core
             return TestInvokeScript(scriptHash, new object[] { operation, args });
         }
 
-        private static void EmitObject(ScriptBuilder sb, object item)
+        public static void EmitObject(ScriptBuilder sb, object item)
         {
             if (item is IEnumerable<byte>)
             {
