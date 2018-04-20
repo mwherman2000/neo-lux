@@ -284,15 +284,15 @@ namespace Neo.Lux.Core
             }
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args, Dictionary<string, decimal> attachments = null)
         {
             var bytes = GenerateScript(scriptHash, args);
-            return CallContract(key, scriptHash, bytes);
+            return CallContract(key, scriptHash, bytes, attachments);
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args, Dictionary<string, decimal> attachments = null)
         {
-            return CallContract(key, scriptHash, new object[] { operation, args });
+            return CallContract(key, scriptHash, new object[] { operation, args }, attachments);
         }
 
         private void GenerateInputsOutputs(KeyPair key, byte[] outputHash, Dictionary<string, decimal> ammounts, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
@@ -383,7 +383,7 @@ namespace Neo.Lux.Core
             }
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes, Dictionary<string, decimal> attachments = null)
         {
             /*var invoke = TestInvokeScript(net, bytes);
             if (invoke.state == null)
@@ -397,7 +397,21 @@ namespace Neo.Lux.Core
             List<Transaction.Output> outputs;
             var gasCost = 0;
 
-            GenerateInputsOutputs(key, scriptHash, new Dictionary<string, decimal>() { { "GAS", gasCost } }, out inputs, out outputs);
+            if (attachments == null)
+            {
+                attachments = new Dictionary<string, decimal>();
+            }
+
+            if (!attachments.ContainsKey("GAS"))
+            {
+                attachments["GAS"] = gasCost;
+            }
+            else
+            {
+                attachments["GAS"] += gasCost;
+            }
+
+            GenerateInputsOutputs(key, scriptHash, attachments, out inputs, out outputs);
 
             Transaction tx = new Transaction()
             {
