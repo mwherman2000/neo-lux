@@ -13,6 +13,11 @@ namespace Neo.Lux.Core
 
         public NeoRPC(string url, int port)
         {
+            if (!url.StartsWith("http://"))
+            {
+                url = "http://" + url;
+            }
+
             this.url = url;
             this.port = port;
         }
