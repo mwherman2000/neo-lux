@@ -49,9 +49,33 @@ namespace Neo.Lux.Core
             return result.HexToBytes();
         }
 
+        // Note: This current implementation requires NeoScan running at port 4000
         public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
         {
-            throw new NotImplementedException();
+            var url = this.url+ ":4000/api/main_net/v1/get_balance/" + address;
+            var json = RequestUtils.GetWebRequest(url);
+
+            var root = LunarParser.JSON.JSONReader.ReadFromString(json);
+            var unspents = new Dictionary<string, List<UnspentEntry>>();
+
+            root = root["balance"];
+
+            foreach (var child in root.Children)
+            {
+                var symbol = child.GetString("asset");
+
+                List<UnspentEntry> list = new List<UnspentEntry>();
+                unspents[symbol] = list;
+
+                var unspentNode = child.GetNode("unspent");
+                foreach (var entry in unspentNode.Children)
+                {
+                    var temp = new UnspentEntry() { txid = entry.GetString("txid"), value = entry.GetDecimal("value"), index = entry.GetUInt32("n") };
+                    list.Add(temp);
+                }
+            }
+
+            return unspents;
         }
 
         public override bool SendRawTransaction(string hexTx)
