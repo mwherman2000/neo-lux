@@ -23,6 +23,12 @@ namespace Neo.Lux.Core
         public object[] result;
     }
 
+    public struct TransactionOutput
+    {
+        public byte[] addressHash;
+        public decimal amount;
+    }
+
     public abstract class NeoAPI
     {
         private static Dictionary<string, string> _systemAssets = null;
@@ -284,20 +290,9 @@ namespace Neo.Lux.Core
             }
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args, Dictionary<string, decimal> attachments = null)
+        private void GenerateInputsOutputs(KeyPair key, string symbol, IEnumerable<TransactionOutput> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
         {
-            var bytes = GenerateScript(scriptHash, args);
-            return CallContract(key, scriptHash, bytes, attachments);
-        }
-
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args, Dictionary<string, decimal> attachments = null)
-        {
-            return CallContract(key, scriptHash, new object[] { operation, args }, attachments);
-        }
-
-        private void GenerateInputsOutputs(KeyPair key, byte[] outputHash, Dictionary<string, decimal> ammounts, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
-        {
-            if (ammounts == null || ammounts.Count == 0)
+            if (targets == null)
             {
                 throw new NeoException("Invalid amount list");
             }
@@ -309,81 +304,101 @@ namespace Neo.Lux.Core
             inputs = new List<Transaction.Input>();
             outputs = new List<Transaction.Output>();
 
-            foreach (var entry in ammounts)
+            string assetID;
+
+            var info = GetAssetsInfo();
+            if (info.ContainsKey(symbol))
             {
-                var symbol = entry.Key;
-                if (!unspent.ContainsKey(symbol))
+                assetID = info[symbol];
+            }
+            else
+            {
+                throw new NeoException($"{symbol} is not a valid blockchain asset.");
+            }
+
+            if (!unspent.ContainsKey(symbol))
+            {
+                throw new NeoException($"Not enough {symbol} in address {key.address}");
+            }
+
+            decimal cost = 0;
+
+            var fromHash = key.PublicKeyHash.ToArray();
+            foreach (var target in targets)
+            {
+                if (target.addressHash.SequenceEqual(fromHash))
                 {
-                    throw new NeoException($"Not enough {symbol} in address {key.address}");
+                    throw new NeoException("Target can't be same as input");
                 }
 
-                var cost = entry.Value;
+                cost += target.amount;
+            }
 
-                string assetID;
+            var sources = unspent[symbol];
+            decimal selected = 0;
+            foreach (var src in sources)
+            {
+                selected += src.value;
 
-                var info = GetAssetsInfo();
-                if (info.ContainsKey(symbol))
+                var input = new Transaction.Input()
                 {
-                    assetID = info[symbol];
-                }
-                else
+                    prevHash = src.txid,
+                    prevIndex = src.index,
+                };
+
+                inputs.Add(input);
+
+                if (selected >= cost)
                 {
-                    throw new NeoException($"{symbol} is not a valid blockchain asset.");
+                    break;
                 }
+            }
 
-                var sources = unspent[symbol];
+            if (selected < cost)
+            {
+                throw new NeoException($"Not enough {symbol}");
+            }
 
-                decimal selected = 0;
-                foreach (var src in sources)
-                {
-                    selected += src.value;
-
-                    var input = new Transaction.Input()
-                    {
-                        prevHash = src.txid,
-                        prevIndex = src.index,
-                    };
-
-                    inputs.Add(input);
-
-                    if (selected >= cost)
-                    {
-                        break;
-                    }
-                }
-
-                if (selected < cost)
-                {
-                    throw new NeoException($"Not enough {symbol}");
-                }
-
-                if(cost > 0)
+            if(cost > 0)
+            {
+                foreach (var target in targets)
                 {
                     var output = new Transaction.Output()
                     {
                         assetID = assetID,
-                        scriptHash = GetStringFromScriptHash(outputHash),
+                        scriptHash = GetStringFromScriptHash(target.addressHash),
                         value = cost
                     };
                     outputs.Add(output);
                 }
+            }
 
-                if (selected > cost || cost == 0)
+            if (selected > cost || cost == 0)
+            {
+                var left = selected - cost;
+
+                var change = new Transaction.Output()
                 {
-                    var left = selected - cost;
-
-                    var change = new Transaction.Output()
-                    {
-                        assetID = assetID,
-                        scriptHash = LuxUtils.reverseHex(key.signatureHash.ToArray().ByteToHex()),
-                        value = left
-                    };
-                    outputs.Add(change);
-                }
+                    assetID = assetID,
+                    scriptHash = LuxUtils.reverseHex(key.signatureHash.ToArray().ByteToHex()),
+                    value = left
+                };
+                outputs.Add(change);
             }
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes, Dictionary<string, decimal> attachments = null)
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
+        {
+            var bytes = GenerateScript(scriptHash, args);
+            return CallContract(key, scriptHash, bytes, attachSymbol, attachTargets);
+        }
+
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
+        {
+            return CallContract(key, scriptHash, new object[] { operation, args }, attachSymbol, attachTargets);
+        }
+
+        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
         {
             /*var invoke = TestInvokeScript(net, bytes);
             if (invoke.state == null)
@@ -395,30 +410,30 @@ namespace Neo.Lux.Core
 
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
-            var gasCost = 0;
 
-            if (attachments == null)
+            if (string.IsNullOrEmpty(attachSymbol))
             {
-                attachments = new Dictionary<string, decimal>();
+                attachSymbol = "GAS";
             }
 
-            if (!attachments.ContainsKey("GAS"))
+            if (attachTargets == null)
             {
-                attachments["GAS"] = gasCost;
-            }
-            else
-            {
-                attachments["GAS"] += gasCost;
+                attachTargets = new List<TransactionOutput>();                
             }
 
-            GenerateInputsOutputs(key, scriptHash, attachments, out inputs, out outputs);
+            GenerateInputsOutputs(key, attachSymbol, attachTargets, out inputs, out outputs);
+
+            if (inputs.Count == 0)
+            {
+                throw new NeoException($"Not enough inputs for transaction");
+            }
 
             Transaction tx = new Transaction()
             {
                 type = 0xd1,
                 version = 0,
                 script = bytes,
-                gas = gasCost,
+                gas = 0,
                 inputs = inputs.ToArray(),
                 outputs = outputs.ToArray()
             };
@@ -437,26 +452,23 @@ namespace Neo.Lux.Core
 
         public Transaction SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
-            return SendAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
-        }
-
-        public Transaction SendAsset(KeyPair fromKey, string toAddress, Dictionary<string, decimal> amounts)
-        {
             if (String.Equals(fromKey.address, toAddress, StringComparison.OrdinalIgnoreCase))
             {
                 throw new NeoException("Source and dest addresses are the same");
             }
 
             var toScriptHash = toAddress.GetScriptHashFromAddress();
-            return SendAsset(fromKey, toScriptHash, amounts);
+            var target = new TransactionOutput() { addressHash = toScriptHash, amount = amount };
+            var targets = new List<TransactionOutput>() { target };
+            return SendAsset(fromKey, symbol, targets);
         }
 
-        public Transaction SendAsset(KeyPair fromKey, byte[] scriptHash, Dictionary<string, decimal> amounts)
+        public Transaction SendAsset(KeyPair fromKey, string symbol, IEnumerable<TransactionOutput> targets)
         {
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            GenerateInputsOutputs(fromKey, scriptHash, amounts, out inputs, out outputs);
+            GenerateInputsOutputs(fromKey, symbol, targets, out inputs, out outputs);
 
             Transaction tx = new Transaction()
             {
@@ -478,22 +490,18 @@ namespace Neo.Lux.Core
 
         public Transaction WithdrawAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
-            return WithdrawAsset(fromKey, toAddress, new Dictionary<string, decimal>() { { symbol, amount } });
+            var toScriptHash = toAddress.GetScriptHashFromAddress();
+            var target = new TransactionOutput() { addressHash = toScriptHash, amount = amount };
+            var targets = new List<TransactionOutput>() { target };
+            return WithdrawAsset(fromKey, symbol, targets);
         }
 
-        public Transaction WithdrawAsset(KeyPair toKey, string fromAddress, Dictionary<string, decimal> amounts)
+        public Transaction WithdrawAsset(KeyPair toKey, string symbol, IEnumerable<TransactionOutput> targets)
         {
-            if (String.Equals(toKey.address, fromAddress, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new NeoException("Source and dest addresses are the same");
-            }
-
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            var scriptHash = fromAddress.GetScriptHashFromAddress();
-
-            GenerateInputsOutputs(toKey, scriptHash, amounts, out inputs, out outputs);
+            GenerateInputsOutputs(toKey, symbol, targets, out inputs, out outputs);
 
             Transaction tx = new Transaction()
             {
