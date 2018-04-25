@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Neo.Cryptography;
-using Neo.Emulation;
-using Neo.Lux;
+using Neo.Lux.Utils;
+using Neo.Lux.Core;
+using Neo.Lux.Cryptography;
 
 namespace NeoLux.WhiteList
 {

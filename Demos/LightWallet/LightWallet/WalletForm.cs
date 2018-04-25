@@ -1,5 +1,6 @@
-﻿using Neo.Lux;
-using Neo.Cryptography;
+﻿using Neo.Lux.Core;
+using Neo.Lux.Utils;
+using Neo.Lux.Cryptography;
 using System;
 using System.Windows.Forms;
 using System.Collections.Generic;
