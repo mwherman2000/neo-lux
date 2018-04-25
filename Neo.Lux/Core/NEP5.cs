@@ -147,6 +147,11 @@ namespace Neo.Lux.Core
             return BalanceOf(address.GetScriptHashFromAddress());
         }
 
+        public decimal BalanceOf(KeyPair keys)
+        {
+            return BalanceOf(keys.address);
+        }
+
         public decimal BalanceOf(byte[] addressHash)
         {
             try
