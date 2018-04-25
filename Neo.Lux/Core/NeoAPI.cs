@@ -112,6 +112,7 @@ namespace Neo.Lux.Core
 
         private static void AddToken(string symbol, string hash)
         {
+            GetTokenInfo();
             _tokenScripts[symbol] = hash;
         }
 
@@ -127,6 +128,20 @@ namespace Neo.Lux.Core
         public static byte[] GetScriptHashFromString(string hash)
         {
             return hash.HexToBytes().Reverse().ToArray();
+        }
+
+        public static byte[] GetScriptHashFromSymbol(string symbol)
+        {
+            GetTokenInfo();
+            foreach (var entry in _tokenScripts)
+            {
+                if (entry.Key == symbol)
+                {
+                    return GetScriptHashFromString(entry.Value);
+                }
+            }
+
+            return null;
         }
 
         public static string GetStringFromScriptHash(byte[] hash)
