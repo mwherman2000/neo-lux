@@ -367,7 +367,7 @@ namespace Neo.Lux.Core
                     {
                         assetID = assetID,
                         scriptHash = GetStringFromScriptHash(target.addressHash),
-                        value = cost
+                        value = target.amount
                     };
                     outputs.Add(output);
                 }
