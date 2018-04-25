@@ -37,6 +37,7 @@ namespace Neo.Lux.Utils
 
         public static byte[] Sign(byte[] message, byte[] prikey, byte[] pubkey)
         {
+#if NET461
             const int ECDSA_PRIVATE_P256_MAGIC = 0x32534345;
             prikey = BitConverter.GetBytes(ECDSA_PRIVATE_P256_MAGIC).Concat(BitConverter.GetBytes(32)).Concat(pubkey).Concat(prikey).ToArray();
             using (CngKey key = CngKey.Import(prikey, CngKeyBlobFormat.EccPrivateBlob))
@@ -44,6 +45,21 @@ namespace Neo.Lux.Utils
             {
                 return ecdsa.SignData(message, HashAlgorithmName.SHA256);
             }
+#else
+            using (var ecdsa = ECDsa.Create(new ECParameters
+            {
+                Curve = ECCurve.NamedCurves.nistP256,
+                D = prikey,
+                Q = new ECPoint
+                {
+                    X = pubkey.Take(32).ToArray(),
+                    Y = pubkey.Skip(32).ToArray()
+                }
+            }))
+            {
+                return ecdsa.SignData(message, HashAlgorithmName.SHA256);
+            }
+#endif
         }
 
         public static bool VerifySignature(byte[] message, byte[] signature, byte[] pubkey)
@@ -67,6 +83,7 @@ namespace Neo.Lux.Utils
             {
                 throw new ArgumentException();
             }
+#if NET461
             const int ECDSA_PUBLIC_P256_MAGIC = 0x31534345;
             pubkey = BitConverter.GetBytes(ECDSA_PUBLIC_P256_MAGIC).Concat(BitConverter.GetBytes(32)).Concat(pubkey).ToArray();
             using (CngKey key = CngKey.Import(pubkey, CngKeyBlobFormat.EccPublicBlob))
@@ -74,6 +91,20 @@ namespace Neo.Lux.Utils
             {
                 return ecdsa.VerifyData(message, signature, HashAlgorithmName.SHA256);
             }
+#else
+            using (var ecdsa = ECDsa.Create(new ECParameters
+            {
+                Curve = ECCurve.NamedCurves.nistP256,
+                Q = new ECPoint
+                {
+                    X = pubkey.Take(32).ToArray(),
+                    Y = pubkey.Skip(32).ToArray()
+                }
+            }))
+            {
+                return ecdsa.VerifyData(message, signature, HashAlgorithmName.SHA256);
+            }
+#endif
         }
 
         private static ThreadLocal<SHA256> _sha256 = new ThreadLocal<SHA256>(() => SHA256.Create());
@@ -212,45 +243,6 @@ namespace Neo.Lux.Utils
                 Array.Clear(passwordHash, 0, passwordHash.Length);
                 return passwordHash2;
             }
-        }
-
-        internal static byte[] ToAesKey(this SecureString password)
-        {
-            using (SHA256 sha256 = SHA256.Create())
-            {
-                byte[] passwordBytes = password.ToArray();
-                byte[] passwordHash = sha256.ComputeHash(passwordBytes);
-                byte[] passwordHash2 = sha256.ComputeHash(passwordHash);
-                Array.Clear(passwordBytes, 0, passwordBytes.Length);
-                Array.Clear(passwordHash, 0, passwordHash.Length);
-                return passwordHash2;
-            }
-        }
-
-        internal static byte[] ToArray(this SecureString s)
-        {
-            if (s == null)
-                throw new NullReferenceException();
-            if (s.Length == 0)
-                return new byte[0];
-            List<byte> result = new List<byte>();
-            IntPtr ptr = Marshal.SecureStringToGlobalAllocAnsi(s);
-            try
-            {
-                int i = 0;
-                do
-                {
-                    byte b = Marshal.ReadByte(ptr, i++);
-                    if (b == 0)
-                        break;
-                    result.Add(b);
-                } while (true);
-            }
-            finally
-            {
-                Marshal.ZeroFreeGlobalAllocAnsi(ptr);
-            }
-            return result.ToArray();
         }
 
         public static byte[] AddressToScriptHash(this string s)
