@@ -9,6 +9,18 @@ using Neo.Lux.Utils;
 
 namespace NeoLux.WhiteList
 {
+    public class Target
+    {
+        public string address;
+        public byte[] hash;
+
+        public decimal balance;
+
+        public Transaction transaction;
+
+        public bool finished;
+    }
+
     class AirDropper
     {
         static void Main()
@@ -97,9 +109,7 @@ namespace NeoLux.WhiteList
             int skip = 0;
             int done = 0;
 
-            var removed = new List<string>();
-
-            Console.WriteLine("Initializng airdrop...");
+            Console.WriteLine("Initializing airdrop...");
 
             var balance = token.BalanceOf(keys);
             var minimum = lines.Count * amount;
@@ -110,56 +120,99 @@ namespace NeoLux.WhiteList
                 return;
             }
 
-            while (lines.Count > 0)
+            var targets = new List<Target>();
+            
+            foreach (var temp in lines)
             {
-                var line = lines[0].Trim();
+                var line = temp.Trim();
                 if (line.Length != 34 || !line.StartsWith("A"))
                 {
                     skip++;
                     lines.RemoveAt(0);
-                    Console.WriteLine("Invalid address: "+line);
+                    Console.WriteLine("Invalid address: " + line);
                     continue;
                 }
 
-                var hash = line.GetScriptHashFromAddress();
+                var target = new Target();
+                target.address = line;
+                target.hash = line.GetScriptHashFromAddress();
+                target.balance = token.BalanceOf(target.hash);
+                target.transaction = null;
 
-                try
+                targets.Add(target);
+
+                Console.WriteLine($"Found {target.address}: {target.balance} {token.Symbol}");
+            }
+
+            while (targets.Count > 0)
+            {
+                for (int i = 0; i < targets.Count; i++)
                 {
-                    var oldBalance = token.BalanceOf(hash);
-
-                    while (true)
+                    var target = targets[i];
+                    try
                     {
-                        var tx = token.Transfer(keys, line, amount);
+                        Console.WriteLine($"Sending {token.Symbol} to  {target.address}");
+                        target.transaction = token.Transfer(keys, target.address, amount);
 
-                        if (tx != null)
+                        if (target.transaction != null)
                         {
-                            Thread.Sleep(20000);
-                            var newBalance = token.BalanceOf(hash);
-
-                            if (newBalance > oldBalance)
-                            {
-                                Console.WriteLine($"{line} => {tx.Hash}");
-                                File.AppendAllText("airdrop.txt", $"{line},{tx.Hash}\n");
-                                lines.RemoveAt(0);
-                                done++;
-                                break;
-                            }
+                            Console.WriteLine("Unconfirmed transaction: "+target.transaction.Hash);
                         }
                         else
                         {
-                            Thread.Sleep(5000);
+                            Console.WriteLine("Transaction failed");
                         }
+
+                        Thread.Sleep(15000);
                     }
-                } catch
-                {
-                    continue;
+                    catch
+                    {
+                        continue;
+                    }
                 }
 
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    var target = targets[i];
+
+                    if (target.transaction == null)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        Console.WriteLine($"Confirming balance: {target.address}. Should have {target.balance + amount} {token.Symbol} or more.");
+                        var newBalance = token.BalanceOf(target.hash);
+
+                        Console.WriteLine($"Got {newBalance} {token.Symbol}.");
+
+                        if (newBalance > target.balance)
+                        {
+                            Console.WriteLine($"Confirming transaction: {target.transaction.Hash}");
+                            var tx = api.GetTransaction(target.transaction.Hash);
+
+                            if (tx != null)
+                            {
+                                Console.WriteLine($"Confirmed {target.address} => {tx.Hash}");
+                                File.AppendAllText("airdrop.txt", $"{target.address},{tx.Hash}\n");
+                                target.finished = true;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+
+                targets.RemoveAll(x => x.finished);
             }
 
             Console.WriteLine($"Skipped {skip} invalid addresses.");
             Console.WriteLine($"Airdropped {amount} {token.Symbol} to {done} addresses.");
 
+            Console.WriteLine("Finished.");
             Console.ReadLine();
         }
     }
