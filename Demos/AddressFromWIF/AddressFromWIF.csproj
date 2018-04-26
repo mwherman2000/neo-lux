@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{EF93E97D-06C5-4EF9-B1BB-6537653EE11B}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>AddressFromPK</RootNamespace>
-    <AssemblyName>AddressFromPK</AssemblyName>
+    <RootNamespace>AddressFromWIF</RootNamespace>
+    <AssemblyName>AddressFromWIF</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -183,7 +183,7 @@ namespace Neo.Lux.Core
 
         public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
-            Console.WriteLine("value: " + value);
+            Console.WriteLine("NEP5 token " +  Name + " transfer " + value);
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();

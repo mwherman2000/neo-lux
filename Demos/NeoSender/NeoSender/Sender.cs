@@ -49,7 +49,7 @@ namespace Neo.Sender
                     // api = NeoDB.NewCustomRPC("http://api.wallet.cityofzion.io", "http://seed2.cityofzion.io:8080");
                     break;
                 case "test":
-				    api = NeoDB.ForTestNet();
+                    api = NeoDB.ForTestNet();
                     break;
                 default:
                     Console.Error.WriteLine("invalid net");
