@@ -96,7 +96,6 @@ namespace NeoLux.WhiteList
 
             int skip = 0;
             int done = 0;
-            int errors = 0;
 
             var removed = new List<string>();
 
@@ -122,11 +121,11 @@ namespace NeoLux.WhiteList
                     continue;
                 }
 
+                var hash = line.GetScriptHashFromAddress();
+
                 try
                 {
-                    var hash = line.GetScriptHashFromAddress();
-
-                    Console.WriteLine(line+ "," + hash.ByteToHex());
+                    var oldBalance = token.BalanceOf(hash);
 
                     while (true)
                     {
@@ -134,24 +133,31 @@ namespace NeoLux.WhiteList
 
                         if (tx != null)
                         {
-                            Console.WriteLine($"{line} => {tx.Hash}");
-                            File.AppendAllText("airdrop.txt", $"{line},{tx.Hash}\n");
-                            lines.RemoveAt(0);
-                            done++;
-                            break;
-                        }
+                            Thread.Sleep(20000);
+                            var newBalance = token.BalanceOf(hash);
 
-                        Thread.Sleep(5000);
+                            if (newBalance > oldBalance)
+                            {
+                                Console.WriteLine($"{line} => {tx.Hash}");
+                                File.AppendAllText("airdrop.txt", $"{line},{tx.Hash}\n");
+                                lines.RemoveAt(0);
+                                done++;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            Thread.Sleep(5000);
+                        }
                     }
                 } catch
                 {
-                    errors++;
+                    continue;
                 }
 
             }
 
             Console.WriteLine($"Skipped {skip} invalid addresses.");
-            Console.WriteLine($"Failed {errors} addresses due to network errors.");
             Console.WriteLine($"Airdropped {amount} {token.Symbol} to {done} addresses.");
 
             Console.ReadLine();
