@@ -1,6 +1,7 @@
 ﻿using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
 using System.Numerics;
+using System;
 
 namespace Neo.Lux.Core
 {
@@ -35,9 +36,9 @@ namespace Neo.Lux.Core
 
                     return _name;
                 }
-                catch
+                catch (Exception e)
                 {
-                    throw new NeoException("Api did not return a value.");
+                    throw new NeoException("Api did not return a value.", e);
                 }
 
             }
@@ -80,9 +81,10 @@ namespace Neo.Lux.Core
 
                     return _decimals;
                 }
-                catch
+                catch (Exception e)
                 {
-                    throw new NeoException("Api did not return a value.");
+                    Console.Error.WriteLine(e);
+                    throw new NeoException("Api did not return a value.", e);
                 }
 
             }
@@ -111,9 +113,9 @@ namespace Neo.Lux.Core
                     return _totalSupply;
 
                 }
-                catch
+                catch (Exception e)
                 {
-                    throw new NeoException("Api did not return a value.");
+                    throw new NeoException("Api did not return a value.", e);
                 }
 
             }
@@ -174,6 +176,7 @@ namespace Neo.Lux.Core
 
         public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
+            Console.WriteLine("value: " + value);
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
@@ -197,9 +200,9 @@ namespace Neo.Lux.Core
             {
                 return ConvertToDecimal((BigInteger)response.result[0]);
             }
-            catch
+            catch (Exception e)
             {
-                throw new NeoException("Api did not return a value.");
+                throw new NeoException("Api did not return a value.", e);
             }
 
         }

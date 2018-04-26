@@ -14,6 +14,11 @@ namespace Neo.Lux.Core
         {
 
         }
+
+        public NeoException(string msg, Exception cause) : base(msg, cause)
+        {
+
+        }
     }
 
     public struct InvokeResult
@@ -98,9 +103,12 @@ namespace Neo.Lux.Core
                 AddToken("TKY", "132947096727c84c7f9e076c90f08fec3bc17f18");
                 AddToken("TNC", "08e8c4400f1af2c20c28e0018f29535eb85d15b6");
                 AddToken("CPX", "45d493a6f73fa5f404244a5fb8472fc014ca5885");
-                AddToken("ACAT", "7f86d61ff377f1b12e589a5907152b57e2ad9a7a");
+                AddToken("ACAT","7f86d61ff377f1b12e589a5907152b57e2ad9a7a");
+
                 AddToken("NRV", "a721d5893480260bd28ca1f395f2c465d0b5b1c2");
-                AddToken("THOR", "67a5086bac196b67d5fd20745b0dc9db4d2930ed");
+                AddToken("NRVE","a721d5893480260bd28ca1f395f2c465d0b5b1c2");
+
+                AddToken("THOR","67a5086bac196b67d5fd20745b0dc9db4d2930ed");
                 AddToken("RHT", "2328008e6f6c7bd157a342e789389eb034d9cbc4");
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6");
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd");
@@ -263,7 +271,7 @@ namespace Neo.Lux.Core
             }
             else
             {
-                throw new Exception("Unsupported contract parameter: " + item.ToString());
+                throw new NeoException("Unsupported contract parameter: " + item.ToString());
             }
         }
 

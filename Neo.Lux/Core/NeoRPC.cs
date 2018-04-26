@@ -137,6 +137,7 @@ namespace Neo.Lux.Core
 
         public DataNode QueryRPC(string method, object[] _params, int id = 1)
         {
+
             var paramData = DataNode.CreateArray("params");
             foreach (var entry in _params)
             {
@@ -151,6 +152,7 @@ namespace Neo.Lux.Core
 
             var rpcEndpoint = url + ":" + port;
 
+            Console.WriteLine("QueryRPC: " + rpcEndpoint + " Data: " + jsonRpcData);
             var response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
 
             return response;
