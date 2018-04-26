@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -30,7 +31,7 @@ namespace Neo.Lux.Utils
 
     public static class LuxUtils
     {
-        public static string reverseHex(string hex)
+        public static string ReverseHex(string hex)
         {
 
             string result = "";
@@ -41,11 +42,82 @@ namespace Neo.Lux.Utils
             return result;
         }
 
-        public static string num2fixed8(decimal num)
+        public static byte[] ReadVarBytes(this BinaryReader reader, int max = 0X7fffffc7)
         {
-            long val = (long)Math.Round(num * 100000000);
-            var hexValue = val.ToString("X16");
-            return reverseHex(("0000000000000000" + hexValue).Substring(hexValue.Length));
+            return reader.ReadBytes((int)reader.ReadVarInt((ulong)max));
+        }
+
+        public static ulong ReadVarInt(this BinaryReader reader, ulong max = ulong.MaxValue)
+        {
+            byte fb = reader.ReadByte();
+            ulong value;
+            if (fb == 0xFD)
+                value = reader.ReadUInt16();
+            else if (fb == 0xFE)
+                value = reader.ReadUInt32();
+            else if (fb == 0xFF)
+                value = reader.ReadUInt64();
+            else
+                value = fb;
+            if (value > max) throw new FormatException();
+            return value;
+        }
+
+        public static string ReadVarString(this BinaryReader reader)
+        {
+            return Encoding.UTF8.GetString(reader.ReadVarBytes());
+        }
+
+        public static void WriteVarBytes(this BinaryWriter writer, byte[] value)
+        {
+            writer.WriteVarInt(value.Length);
+            writer.Write(value);
+        }
+
+        public static void WriteVarInt(this BinaryWriter writer, long value)
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException();
+            if (value < 0xFD)
+            {
+                writer.Write((byte)value);
+            }
+            else if (value <= 0xFFFF)
+            {
+                writer.Write((byte)0xFD);
+                writer.Write((ushort)value);
+            }
+            else if (value <= 0xFFFFFFFF)
+            {
+                writer.Write((byte)0xFE);
+                writer.Write((uint)value);
+            }
+            else
+            {
+                writer.Write((byte)0xFF);
+                writer.Write(value);
+            }
+        }
+
+        public static void WriteVarString(this BinaryWriter writer, string value)
+        {
+            writer.WriteVarBytes(Encoding.UTF8.GetBytes(value));
+        }
+
+        public static void WriteFixed(this BinaryWriter writer, decimal value)
+        {
+            long D = 100_000_000;
+            value *= D;
+            writer.Write((long)value);
+        }
+
+        public static decimal ReadFixed(this BinaryReader reader)
+        {
+            var val = reader.ReadInt64();
+            long D = 100_000_000;
+            decimal r = val;
+            r /= (decimal)D;
+            return r; 
         }
 
         public static byte[] GetScriptHashFromAddress(this string address)
@@ -59,7 +131,7 @@ namespace Neo.Lux.Utils
 
         public static string ByteToHex(this byte[] data)
         {
-            string hex = BitConverter.ToString(data).Replace("-", "");
+            string hex = BitConverter.ToString(data).Replace("-", "").ToLower();
             return hex;
         }
 

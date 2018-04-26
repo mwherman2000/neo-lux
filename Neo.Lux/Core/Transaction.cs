@@ -37,12 +37,6 @@ namespace Neo.Lux.Core
         public Witness[] witnesses;
 
         #region HELPERS
-
-        protected static string num2hexstring(long num, int size = 2)
-        {
-            return num.ToString("X" + size);
-        }
-
         protected static void SerializeWitness(BinaryWriter writer, Witness witness)
         {
             writer.Write((byte)witness.invocationScript.Length);
@@ -59,14 +53,37 @@ namespace Neo.Lux.Core
 
         protected static void SerializeTransactionOutput(BinaryWriter writer, Output output)
         {
-            //return LuxUtils.reverseHex(output.assetID) + LuxUtils.num2fixed8(output.value)+ LuxUtils.reverseHex(output.scriptHash);
             writer.Write(output.assetID);
             writer.WriteFixed(output.value);
             writer.Write(output.scriptHash);
         }
+
+        protected static Witness UnserializeWitness(BinaryReader reader)
+        {
+            var invocationScriptLength = reader.ReadByte();
+            var invocationScript = reader.ReadBytes(invocationScriptLength);
+            var verificationScriptLength = reader.ReadByte();
+            var verificationScript = reader.ReadBytes(verificationScriptLength);
+            return new Witness() { invocationScript = invocationScript, verificationScript = verificationScript };
+        }
+
+        protected static Input UnserializeTransactionInput(BinaryReader reader)
+        {
+            var prevHash = reader.ReadBytes(32);
+            var prevIndex = reader.ReadUInt16();
+            return new Input() { prevHash = prevHash, prevIndex = prevIndex };
+        }
+
+        protected static Output UnserializeTransactionOutput(BinaryReader reader)
+        {
+            var assetID = reader.ReadBytes(32);
+            var value = reader.ReadFixed();
+            var scriptHash = reader.ReadBytes(20);
+            return new Output() { assetID = assetID, value = value, scriptHash = scriptHash };
+        }
         #endregion
 
-        public virtual byte[] Serialize(bool signed = true)
+        public byte[] Serialize(bool signed = true)
         {
             using (var stream = new MemoryStream())
             {
@@ -76,14 +93,18 @@ namespace Neo.Lux.Core
                     writer.Write((byte)this.version);
 
                     // exclusive data
-                    if (this.type == 0xd1)
+                    switch (this.type)
                     {
-                        writer.WriteVarInt(this.script.Length);
-                        writer.Write(this.script);
-                        if (this.version >= 1)
-                        {
-                            writer.WriteFixed(this.gas);
-                        }
+                        case 0xd1:
+                            {
+                                writer.WriteVarInt(this.script.Length);
+                                writer.Write(this.script);
+                                if (this.version >= 1)
+                                {
+                                    writer.WriteFixed(this.gas);
+                                }
+                                break;
+                            }
                     }
 
                     // Don't need any attributes
@@ -147,16 +168,64 @@ namespace Neo.Lux.Core
 
         public static Transaction Decode(byte[] bytes)
         {
+            var tx = new Transaction();
             using (var stream = new MemoryStream(bytes))
             {
                 using (var reader = new BinaryReader(stream))
                 {
+                    tx.type = reader.ReadByte();
+                    tx.version = reader.ReadByte();
 
+                    switch (tx.type)
+                    {
+                        case 0xd1:
+                            {
+                                var scriptLength = reader.ReadVarInt();
+                                tx.script = reader.ReadBytes((int)scriptLength);
+
+                                if (tx.version >= 1)
+                                {
+                                    tx.gas = reader.ReadFixed();
+                                }
+                                else
+                                {
+                                    tx.gas = 0;
+                                }
+
+                                break;
+                            }
+                    }
+
+                    var attrCount = reader.ReadByte();
+                    if (attrCount != 0)
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    var inputCount = (int)reader.ReadVarInt();
+                    tx.inputs = new Input[inputCount];
+                    for (int i = 0; i < inputCount; i++)
+                    {
+                        tx.inputs[i] = UnserializeTransactionInput(reader);
+                    }
+
+                    var outputCount = (int)reader.ReadVarInt();
+                    tx.outputs = new Output[outputCount];
+                    for (int i = 0; i < outputCount; i++)
+                    {
+                        tx.outputs[i] = UnserializeTransactionOutput(reader);
+                    }
+
+                    var witnessCount = (int)reader.ReadVarInt();
+                    tx.witnesses = new Witness[witnessCount];
+                    for (int i=0; i< witnessCount; i++)
+                    {
+                        tx.witnesses[i] = UnserializeWitness(reader);
+                    }
                 }
             }
 
-
-            throw new NotImplementedException();
+            return tx;
         }
     }
 

@@ -152,5 +152,20 @@ namespace Neo.Lux.Core
 
             return response;
         }
+
+        public override Transaction GetTransaction(string hash)
+        {
+            var response = QueryRPC("getrawtransaction", new object[] { hash});
+            if (response != null && response.HasNode("result"))
+            {
+                var result = response.GetString("result");
+                var bytes = result.HexToBytes();
+                return Transaction.Decode(bytes);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

@@ -146,7 +146,7 @@ namespace Neo.Lux.Core
 
         public static string GetStringFromScriptHash(byte[] hash)
         {
-            return LuxUtils.reverseHex(hash.ToHexString());
+            return LuxUtils.ReverseHex(hash.ToHexString());
         }
 
         protected static object[] ParseStack(DataNode stack)
@@ -357,7 +357,7 @@ namespace Neo.Lux.Core
 
                 var input = new Transaction.Input()
                 {
-                    prevHash = LuxUtils.reverseHex(src.txid).HexToBytes(),
+                    prevHash = LuxUtils.ReverseHex(src.txid).HexToBytes(),
                     prevIndex = src.index,
                 };
 
@@ -380,8 +380,8 @@ namespace Neo.Lux.Core
                 {
                     var output = new Transaction.Output()
                     {
-                        assetID = LuxUtils.reverseHex(assetID).HexToBytes(),
-                        scriptHash = LuxUtils.reverseHex(GetStringFromScriptHash(target.addressHash)).HexToBytes(),
+                        assetID = LuxUtils.ReverseHex(assetID).HexToBytes(),
+                        scriptHash = LuxUtils.ReverseHex(GetStringFromScriptHash(target.addressHash)).HexToBytes(),
                         value = target.amount
                     };
                     outputs.Add(output);
@@ -394,7 +394,7 @@ namespace Neo.Lux.Core
 
                 var change = new Transaction.Output()
                 {
-                    assetID = LuxUtils.reverseHex(assetID).HexToBytes(),
+                    assetID = LuxUtils.ReverseHex(assetID).HexToBytes(),
                     scriptHash = key.signatureHash.ToArray(),
                     value = left
                 };
@@ -466,12 +466,11 @@ namespace Neo.Lux.Core
 
         public abstract byte[] GetStorage(string scriptHash, byte[] key);
 
-        public abstract Transaction GetTransaction(UInt256 hash);
+        public abstract Transaction GetTransaction(string hash);
 
-        public Transaction GetTransaction(string hash)
+        public Transaction GetTransaction(UInt256 hash)
         {
-            var bytes = hash.HexToBytes();
-            return GetTransaction(new UInt256(bytes));
+            return GetTransaction(hash.ToString());
         }
 
         public Transaction SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)

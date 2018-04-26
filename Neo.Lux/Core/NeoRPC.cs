@@ -120,6 +120,21 @@ namespace Neo.Lux.Core
             return invoke;
         }
 
+        public override Transaction GetTransaction(string hash)
+        {
+            var response = QueryRPC("getrawtransaction", new object[] { hash });
+            if (response != null && response.HasNode("result"))
+            {
+                var result = response.GetString("result");
+                var bytes = result.HexToBytes();
+                return Transaction.Decode(bytes);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public DataNode QueryRPC(string method, object[] _params, int id = 1)
         {
             var paramData = DataNode.CreateArray("params");
@@ -140,6 +155,5 @@ namespace Neo.Lux.Core
 
             return response;
         }
-
     }
 }
