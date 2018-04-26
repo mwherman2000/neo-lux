@@ -160,7 +160,7 @@ namespace Neo.Lux.Core
             {
                 var result = response.GetString("result");
                 var bytes = result.HexToBytes();
-                return Transaction.Decode(bytes);
+                return Transaction.Unserialize(bytes);
             }
             else
             {

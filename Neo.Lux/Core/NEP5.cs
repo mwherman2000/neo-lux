@@ -154,15 +154,16 @@ namespace Neo.Lux.Core
 
         public decimal BalanceOf(byte[] addressHash)
         {
+            InvokeResult response = new InvokeResult();
             try
             {
-                var response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
+                response = api.TestInvokeScript(contractHash, "balanceOf", new object[] { addressHash });
                 var balance = new BigInteger((byte[])response.result[0]);
                 return ConvertToDecimal(balance);
             }
             catch
             {
-                throw new NeoException("Api did not return a value.");
+                throw new NeoException("Api did not return a value." + response);
             }
         }
 

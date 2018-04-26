@@ -445,7 +445,7 @@ namespace Neo.Lux.Core
 
             Transaction tx = new Transaction()
             {
-                type = 0xd1,
+                type = TransactionType.InvocationTransaction,
                 version = 0,
                 script = bytes,
                 gas = 0,
@@ -495,7 +495,7 @@ namespace Neo.Lux.Core
 
             Transaction tx = new Transaction()
             {
-                type = 128,
+                type = TransactionType.ContractTransaction,
                 version = 0,
                 script = null,
                 gas = -1,
@@ -529,7 +529,7 @@ namespace Neo.Lux.Core
 
             Transaction tx = new Transaction()
             {
-                type = 128,
+                type = TransactionType.ContractTransaction,
                 version = 0,
                 script = null,
                 gas = -1,

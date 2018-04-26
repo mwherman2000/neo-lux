@@ -2,18 +2,117 @@
 using Neo.Lux.Utils;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Neo.Lux.Core
 {
-    public class Transaction
+    public enum TransactionAttributeUsage
     {
-        public struct Witness
+        ContractHash = 0x00,
+        ECDH02 = 0x02,
+        ECDH03 = 0x03,
+        Script = 0x20,
+        Vote = 0x30,
+        DescriptionUrl = 0x81,
+        Description = 0x90,
+
+        Hash1 = 0xa1,
+        Hash2 = 0xa2,
+        Hash3 = 0xa3,
+        Hash4 = 0xa4,
+        Hash5 = 0xa5,
+        Hash6 = 0xa6,
+        Hash7 = 0xa7,
+        Hash8 = 0xa8,
+        Hash9 = 0xa9,
+        Hash10 = 0xaa,
+        Hash11 = 0xab,
+        Hash12 = 0xac,
+        Hash13 = 0xad,
+        Hash14 = 0xae,
+        Hash15 = 0xaf,
+
+        Remark = 0xf0,
+        Remark1 = 0xf1,
+        Remark2 = 0xf2,
+        Remark3 = 0xf3,
+        Remark4 = 0xf4,
+        Remark5 = 0xf5,
+        Remark6 = 0xf6,
+        Remark7 = 0xf7,
+        Remark8 = 0xf8,
+        Remark9 = 0xf9,
+        Remark10 = 0xfa,
+        Remark11 = 0xfb,
+        Remark12 = 0xfc,
+        Remark13 = 0xfd,
+        Remark14 = 0xfe,
+        Remark15 = 0xff
+    }
+
+    public struct TransactionAttribute
+    {
+        public TransactionAttributeUsage Usage;
+        public byte[] Data;
+
+        public static TransactionAttribute Unserialize(BinaryReader reader)
         {
-            public byte[] invocationScript;
-            public byte[] verificationScript;
+            var Usage = (TransactionAttributeUsage) reader.ReadByte();
+
+            byte[] Data;
+
+            if (Usage == TransactionAttributeUsage.ContractHash || Usage == TransactionAttributeUsage.Vote || ( Usage >= TransactionAttributeUsage.Hash1 && Usage <= TransactionAttributeUsage.Hash15))
+                Data = reader.ReadBytes(32);
+            else if (Usage == TransactionAttributeUsage.ECDH02 || Usage == TransactionAttributeUsage.ECDH03)
+                Data = new[] { (byte)Usage }.Concat(reader.ReadBytes(32)).ToArray();
+            else if (Usage == TransactionAttributeUsage.Script)
+                Data = reader.ReadBytes(20);
+            else if (Usage == TransactionAttributeUsage.DescriptionUrl)
+                Data = reader.ReadBytes(reader.ReadByte());
+            else if (Usage == TransactionAttributeUsage.Description || Usage >= TransactionAttributeUsage.Remark)
+                Data = reader.ReadVarBytes(ushort.MaxValue);
+            else
+                throw new NotImplementedException();
+
+            return new TransactionAttribute() { Usage = Usage, Data = Data};
+        }
+    }
+
+    public struct Witness
+    {
+        public byte[] invocationScript;
+        public byte[] verificationScript;
+
+        public void Serialize(BinaryWriter writer)
+        {
+            writer.WriteVarBytes(this.invocationScript);
+            writer.WriteVarBytes(this.verificationScript);
         }
 
+        public static Witness Unserialize(BinaryReader reader)
+        {
+            var invocationScript = reader.ReadVarBytes(65536);
+            var verificationScript = reader.ReadVarBytes(65536);
+            return new Witness() { invocationScript = invocationScript, verificationScript = verificationScript };
+        }
+    }
+
+    public enum TransactionType : byte
+    {
+        MinerTransaction = 0x00,
+        IssueTransaction = 0x01,
+        ClaimTransaction = 0x02,
+        EnrollmentTransaction = 0x20,
+        RegisterTransaction = 0x40,
+        ContractTransaction = 0x80,
+        StateTransaction = 0x90,
+        PublishTransaction = 0xd0,
+        InvocationTransaction = 0xd1
+    }
+
+    public class Transaction
+    {
         public struct Input
         {
             public byte[] prevHash;
@@ -27,7 +126,7 @@ namespace Neo.Lux.Core
             public decimal value;
         }
 
-        public byte type;
+        public TransactionType type;
         public byte version;
         public byte[] script;
         public decimal gas;
@@ -36,15 +135,10 @@ namespace Neo.Lux.Core
         public Output[] outputs;
         public Witness[] witnesses;
 
-        #region HELPERS
-        protected static void SerializeWitness(BinaryWriter writer, Witness witness)
-        {
-            writer.Write((byte)witness.invocationScript.Length);
-            writer.Write(witness.invocationScript);
-            writer.Write((byte)witness.verificationScript.Length);
-            writer.Write(witness.verificationScript);
-        }
+        public Input[] references;
+        public TransactionAttribute[] attributes;
 
+        #region HELPERS
         protected static void SerializeTransactionInput(BinaryWriter writer, Input input)
         {
             writer.Write(input.prevHash);
@@ -56,15 +150,6 @@ namespace Neo.Lux.Core
             writer.Write(output.assetID);
             writer.WriteFixed(output.value);
             writer.Write(output.scriptHash);
-        }
-
-        protected static Witness UnserializeWitness(BinaryReader reader)
-        {
-            var invocationScriptLength = reader.ReadByte();
-            var invocationScript = reader.ReadBytes(invocationScriptLength);
-            var verificationScriptLength = reader.ReadByte();
-            var verificationScript = reader.ReadBytes(verificationScriptLength);
-            return new Witness() { invocationScript = invocationScript, verificationScript = verificationScript };
         }
 
         protected static Input UnserializeTransactionInput(BinaryReader reader)
@@ -95,7 +180,7 @@ namespace Neo.Lux.Core
                     // exclusive data
                     switch (this.type)
                     {
-                        case 0xd1:
+                        case TransactionType.InvocationTransaction:
                             {
                                 writer.WriteVarInt(this.script.Length);
                                 writer.Write(this.script);
@@ -127,7 +212,7 @@ namespace Neo.Lux.Core
                         writer.WriteVarInt(this.witnesses.Length);
                         foreach (var witness in this.witnesses)
                         {
-                            SerializeWitness(writer, witness);
+                            witness.Serialize(writer);
                         }
                     }
 
@@ -147,7 +232,7 @@ namespace Neo.Lux.Core
 
             var invocationScript = ("40" + signature.ByteToHex()).HexToBytes();
             var verificationScript = key.signatureScript.HexToBytes();
-            this.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
+            this.witnesses = new Witness[] { new Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
         }
 
         private UInt256 _hash = null;
@@ -166,66 +251,104 @@ namespace Neo.Lux.Core
             }
         }
 
-        public static Transaction Decode(byte[] bytes)
+        public static Transaction Unserialize(BinaryReader reader)
         {
             var tx = new Transaction();
+
+            tx.type = (TransactionType) reader.ReadByte();
+            tx.version = reader.ReadByte();
+
+            switch (tx.type)
+            {
+                case TransactionType.InvocationTransaction:
+                    {
+                        var scriptLength = reader.ReadVarInt();
+                        tx.script = reader.ReadBytes((int)scriptLength);
+
+                        if (tx.version >= 1)
+                        {
+                            tx.gas = reader.ReadFixed();
+                        }
+                        else
+                        {
+                            tx.gas = 0;
+                        }
+
+                        break;
+                    }
+
+                case TransactionType.MinerTransaction:
+                    {
+                        var Nonce = reader.ReadUInt32();
+                        break;
+                    }
+
+                case TransactionType.ClaimTransaction:
+                    {
+                        var len = (int)reader.ReadVarInt((ulong)0x10000000);
+                        tx.references = new Input[len];
+                        for (int i = 0; i < len; i++)
+                        {
+                            tx.references[i] = Transaction.UnserializeTransactionInput(reader);
+                        }
+
+                        break;
+                    }
+
+                case TransactionType.ContractTransaction:
+                    {
+                        break;
+                    }
+
+                default:
+                    {
+                        throw new NotImplementedException();
+                    }
+            }
+
+            var attrCount = (int)reader.ReadVarInt(16);
+            if (attrCount != 0)
+            {
+                tx.attributes = new TransactionAttribute[attrCount];
+                for (int i = 0; i < attrCount; i++)
+                {
+                    tx.attributes[i] = TransactionAttribute.Unserialize(reader);
+                }
+            }
+
+            var inputCount = (int)reader.ReadVarInt();
+            tx.inputs = new Input[inputCount];
+            for (int i = 0; i < inputCount; i++)
+            {
+                tx.inputs[i] = UnserializeTransactionInput(reader);
+            }
+
+            var outputCount = (int)reader.ReadVarInt();
+            tx.outputs = new Output[outputCount];
+            for (int i = 0; i < outputCount; i++)
+            {
+                tx.outputs[i] = UnserializeTransactionOutput(reader);
+            }
+
+            var witnessCount = (int)reader.ReadVarInt();
+            tx.witnesses = new Witness[witnessCount];
+            for (int i = 0; i < witnessCount; i++)
+            {
+                tx.witnesses[i] = Witness.Unserialize(reader);
+            }
+
+            return tx;
+        }
+
+        public static Transaction Unserialize(byte[] bytes)
+        {
             using (var stream = new MemoryStream(bytes))
             {
                 using (var reader = new BinaryReader(stream))
                 {
-                    tx.type = reader.ReadByte();
-                    tx.version = reader.ReadByte();
-
-                    switch (tx.type)
-                    {
-                        case 0xd1:
-                            {
-                                var scriptLength = reader.ReadVarInt();
-                                tx.script = reader.ReadBytes((int)scriptLength);
-
-                                if (tx.version >= 1)
-                                {
-                                    tx.gas = reader.ReadFixed();
-                                }
-                                else
-                                {
-                                    tx.gas = 0;
-                                }
-
-                                break;
-                            }
-                    }
-
-                    var attrCount = reader.ReadByte();
-                    if (attrCount != 0)
-                    {
-                        throw new NotImplementedException();
-                    }
-
-                    var inputCount = (int)reader.ReadVarInt();
-                    tx.inputs = new Input[inputCount];
-                    for (int i = 0; i < inputCount; i++)
-                    {
-                        tx.inputs[i] = UnserializeTransactionInput(reader);
-                    }
-
-                    var outputCount = (int)reader.ReadVarInt();
-                    tx.outputs = new Output[outputCount];
-                    for (int i = 0; i < outputCount; i++)
-                    {
-                        tx.outputs[i] = UnserializeTransactionOutput(reader);
-                    }
-
-                    var witnessCount = (int)reader.ReadVarInt();
-                    tx.witnesses = new Witness[witnessCount];
-                    for (int i=0; i< witnessCount; i++)
-                    {
-                        tx.witnesses[i] = UnserializeWitness(reader);
-                    }
+                    return Unserialize(reader);
                 }
             }
-
-            return tx;
         }
     }
 
