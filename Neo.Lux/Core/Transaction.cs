@@ -1,6 +1,7 @@
 ﻿using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
 using System;
+using System.IO;
 using System.Text;
 
 namespace Neo.Lux.Core
@@ -9,20 +10,20 @@ namespace Neo.Lux.Core
     {
         public struct Witness
         {
-            public string invocationScript;
-            public string verificationScript;
+            public byte[] invocationScript;
+            public byte[] verificationScript;
         }
 
         public struct Input
         {
-            public string prevHash;
+            public byte[] prevHash;
             public uint prevIndex;
         }
 
         public struct Output
         {
-            public string scriptHash;
-            public string assetID;
+            public byte[] scriptHash;
+            public byte[] assetID;
             public decimal value;
         }
 
@@ -42,102 +43,89 @@ namespace Neo.Lux.Core
             return num.ToString("X" + size);
         }
 
-        protected static string num2VarInt(long num)
+        protected static void SerializeWitness(BinaryWriter writer, Witness witness)
         {
-            if (num < 0xfd)
-            {
-                return num2hexstring(num);
-            }
-
-            if (num <= 0xffff)
-            {
-                return "fd" + num2hexstring(num, 4);
-            }
-
-            if (num <= 0xffffffff)
-            {
-                return "fe" + num2hexstring(num, 8);
-            }
-
-            return "ff" + num2hexstring(num, 8) + num2hexstring(num / (int)Math.Pow(2, 32), 8);
+            writer.Write((byte)witness.invocationScript.Length);
+            writer.Write(witness.invocationScript);
+            writer.Write((byte)witness.verificationScript.Length);
+            writer.Write(witness.verificationScript);
         }
 
-        protected static string SerializeWitness(Witness witness)
+        protected static void SerializeTransactionInput(BinaryWriter writer, Input input)
         {
-            var invoLength = num2hexstring((witness.invocationScript.Length / 2));
-            var veriLength = num2hexstring(witness.verificationScript.Length / 2);
-            return invoLength + witness.invocationScript + veriLength + witness.verificationScript;
+            writer.Write(input.prevHash);
+            writer.Write((ushort)input.prevIndex);
         }
 
-        protected static string SerializeTransactionInput(Input input)
+        protected static void SerializeTransactionOutput(BinaryWriter writer, Output output)
         {
-            return LuxUtils.reverseHex(input.prevHash) + LuxUtils.reverseHex(num2hexstring(input.prevIndex, 4));
-        }
-
-        protected static string SerializeTransactionOutput(Output output)
-        {
-            var value = LuxUtils.num2fixed8(output.value);
-            return LuxUtils.reverseHex(output.assetID) + value + LuxUtils.reverseHex(output.scriptHash);
+            //return LuxUtils.reverseHex(output.assetID) + LuxUtils.num2fixed8(output.value)+ LuxUtils.reverseHex(output.scriptHash);
+            writer.Write(output.assetID);
+            writer.WriteFixed(output.value);
+            writer.Write(output.scriptHash);
         }
         #endregion
 
-        public virtual string Serialize(bool signed = true)
+        public virtual byte[] Serialize(bool signed = true)
         {
-            var tx = this;
-            var result = new StringBuilder();
-            result.Append(num2hexstring(tx.type));
-            result.Append(num2hexstring(tx.version));
-
-            // excluusive data
-            if (tx.type == 0xd1)
+            using (var stream = new MemoryStream())
             {
-                result.Append(num2VarInt(tx.script.Length));
-                result.Append(tx.script.ToHexString());
-                if (tx.version >= 1)
+                using (var writer = new BinaryWriter(stream))
                 {
-                    result.Append(LuxUtils.num2fixed8(tx.gas));
+                    writer.Write((byte)this.type);
+                    writer.Write((byte)this.version);
+
+                    // exclusive data
+                    if (this.type == 0xd1)
+                    {
+                        writer.WriteVarInt(this.script.Length);
+                        writer.Write(this.script);
+                        if (this.version >= 1)
+                        {
+                            writer.WriteFixed(this.gas);
+                        }
+                    }
+
+                    // Don't need any attributes
+                    writer.Write((byte)0);
+
+                    writer.WriteVarInt(this.inputs.Length);
+                    foreach (var input in this.inputs)
+                    {
+                        SerializeTransactionInput(writer, input);
+                    }
+
+                    writer.WriteVarInt(this.outputs.Length);
+                    foreach (var output in this.outputs)
+                    {
+                        SerializeTransactionOutput(writer, output);
+                    }
+
+                    if (signed && this.witnesses != null)
+                    {
+                        writer.WriteVarInt(this.witnesses.Length);
+                        foreach (var witness in this.witnesses)
+                        {
+                            SerializeWitness(writer, witness);
+                        }
+                    }
+
                 }
+
+                return stream.ToArray();
             }
-
-            // Don't need any attributes
-            result.Append("00");
-
-            result.Append(num2VarInt(tx.inputs.Length));
-            foreach (var input in tx.inputs)
-            {
-                result.Append(SerializeTransactionInput(input));
-            }
-
-            result.Append(num2VarInt(tx.outputs.Length));
-            foreach (var output in tx.outputs)
-            {
-                result.Append(SerializeTransactionOutput(output));
-            }
-
-
-            if (signed && tx.witnesses != null && tx.witnesses.Length > 0)
-            {
-                result.Append(num2VarInt(tx.witnesses.Length));
-                foreach (var script in tx.witnesses)
-                {
-                    result.Append(SerializeWitness(script));
-                }
-            }
-
-            return result.ToString().ToLowerInvariant();
         }
 
         public void Sign(KeyPair key)
         {
             var txdata = this.Serialize(false);
-            var txstr = txdata.HexToBytes();
 
             var privkey = key.PrivateKey;
             var pubkey = key.PublicKey;
-            var signature = CryptoUtils.Sign(txstr, privkey, pubkey);
+            var signature = CryptoUtils.Sign(txdata, privkey, pubkey);
 
-            var invocationScript = "40" + signature.ByteToHex();
-            var verificationScript = key.signatureScript;
+            var invocationScript = ("40" + signature.ByteToHex()).HexToBytes();
+            var verificationScript = key.signatureScript.HexToBytes();
             this.witnesses = new Transaction.Witness[] { new Transaction.Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
         }
 
@@ -150,12 +138,25 @@ namespace Neo.Lux.Core
                 if (_hash == null)
                 {
                     var rawTx = this.Serialize(false);
-                    var bytes = rawTx.HexToBytes();
-                    _hash = new UInt256(CryptoUtils.Hash256(bytes));
+                    _hash = new UInt256(CryptoUtils.Hash256(rawTx));
                 }
 
                 return _hash;
             }
+        }
+
+        public static Transaction Decode(byte[] bytes)
+        {
+            using (var stream = new MemoryStream(bytes))
+            {
+                using (var reader = new BinaryReader(stream))
+                {
+
+                }
+            }
+
+
+            throw new NotImplementedException();
         }
     }
 

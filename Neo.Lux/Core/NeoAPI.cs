@@ -357,7 +357,7 @@ namespace Neo.Lux.Core
 
                 var input = new Transaction.Input()
                 {
-                    prevHash = src.txid,
+                    prevHash = LuxUtils.reverseHex(src.txid).HexToBytes(),
                     prevIndex = src.index,
                 };
 
@@ -380,8 +380,8 @@ namespace Neo.Lux.Core
                 {
                     var output = new Transaction.Output()
                     {
-                        assetID = assetID,
-                        scriptHash = GetStringFromScriptHash(target.addressHash),
+                        assetID = LuxUtils.reverseHex(assetID).HexToBytes(),
+                        scriptHash = LuxUtils.reverseHex(GetStringFromScriptHash(target.addressHash)).HexToBytes(),
                         value = target.amount
                     };
                     outputs.Add(output);
@@ -394,8 +394,8 @@ namespace Neo.Lux.Core
 
                 var change = new Transaction.Output()
                 {
-                    assetID = assetID,
-                    scriptHash = LuxUtils.reverseHex(key.signatureHash.ToArray().ByteToHex()),
+                    assetID = LuxUtils.reverseHex(assetID).HexToBytes(),
+                    scriptHash = key.signatureHash.ToArray(),
                     value = left
                 };
                 outputs.Add(change);
@@ -455,7 +455,8 @@ namespace Neo.Lux.Core
 
             tx.Sign(key);
 
-            var hexTx = tx.Serialize(true);
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
 
             var ok = SendRawTransaction(hexTx);
             return ok ? tx : null;
@@ -464,6 +465,14 @@ namespace Neo.Lux.Core
         public abstract bool SendRawTransaction(string hexTx);
 
         public abstract byte[] GetStorage(string scriptHash, byte[] key);
+
+        public abstract Transaction GetTransaction(UInt256 hash);
+
+        public Transaction GetTransaction(string hash)
+        {
+            var bytes = hash.HexToBytes();
+            return GetTransaction(new UInt256(bytes));
+        }
 
         public Transaction SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
         {
@@ -497,7 +506,8 @@ namespace Neo.Lux.Core
 
             tx.Sign(fromKey);
 
-            var hexTx = tx.Serialize(true);
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
 
             var ok = SendRawTransaction(hexTx);
             return ok ? tx : null;
@@ -530,7 +540,8 @@ namespace Neo.Lux.Core
 
             tx.Sign(toKey);
 
-            var hexTx = tx.Serialize(true);
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
 
             var ok = SendRawTransaction(hexTx);
             return ok ? tx : null;
