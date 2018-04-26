@@ -46,14 +46,7 @@ namespace Neo.Lux.Airdropper
                 Console.Write("Enter contract script hash or token symbol: ");
                 var temp = Console.ReadLine();
 
-                if (temp.StartsWith("0x"))
-                {
-                    temp = temp.Substring(2);
-                }
-                else
-                {
-                    scriptHash = NeoAPI.GetScriptHashFromSymbol(temp);
-                }
+                scriptHash = NeoAPI.GetScriptHashFromSymbol(temp);
 
                 if (scriptHash == null && temp.Length == 40)
                 {
@@ -96,7 +89,7 @@ namespace Neo.Lux.Airdropper
             }
 
             decimal amount;
-            Console.WriteLine("Write amount to distribute to each address:");
+            Console.WriteLine($"Write amount of {token.Symbol} to distribute to each address:");
             do
             {
                 if (decimal.TryParse(Console.ReadLine(), out amount) && amount > 0)
@@ -109,7 +102,7 @@ namespace Neo.Lux.Airdropper
             int skip = 0;
             int done = 0;
 
-            Console.WriteLine("Initializing airdrop...");
+            Console.WriteLine($"Initializing {token.Name} airdrop...");
 
             var balance = token.BalanceOf(keys);
             var minimum = lines.Count * amount;
