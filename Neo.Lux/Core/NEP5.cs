@@ -21,6 +21,13 @@ namespace Neo.Lux.Core
             this.contractHash = contractHash;
         }
 
+        public NEP5(NeoAPI api, string contractHash, string name, BigInteger decimals)
+            : this(api, contractHash)
+        {
+            this._decimals = decimals;
+            this._name = name;
+        }
+
         private string _name = null;
         public string Name
         {
