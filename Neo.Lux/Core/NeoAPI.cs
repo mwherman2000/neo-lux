@@ -14,6 +14,11 @@ namespace Neo.Lux.Core
         {
 
         }
+
+        public NeoException(string msg, Exception cause) : base(msg, cause)
+        {
+
+        }
     }
 
     public struct InvokeResult
@@ -83,37 +88,46 @@ namespace Neo.Lux.Core
             return null;
         }
 
-        private static Dictionary<string, string> _tokenScripts = null;
 
-        internal static Dictionary<string, string> GetTokenInfo()
+        // TODO NEP5 should be refactored to be a data object without the embedded api
+
+        public struct TokenInfo {
+            public string symbol;
+            public string hash;
+            public string name;
+            public int decimals;
+        }
+
+        private static Dictionary<string, TokenInfo> _tokenScripts = null;
+
+        internal static Dictionary<string, TokenInfo> GetTokenInfo()
         {
             if (_tokenScripts == null)
             {
-                _tokenScripts = new Dictionary<string, string>();
-                AddToken("RPX", "ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9");
-                AddToken("DBC", "b951ecbbc5fe37a9c280a76cb0ce0014827294cf");
-                AddToken("QLC", "0d821bd7b6d53f5c2b40e217c6defc8bbe896cf5");
-                AddToken("APH", "a0777c3ce2b169d4a23bcba4565e3225a0122d95");
-                AddToken("ZPT", "ac116d4b8d4ca55e6b6d4ecce2192039b51cccc5");
-                AddToken("TKY", "132947096727c84c7f9e076c90f08fec3bc17f18");
-                AddToken("TNC", "08e8c4400f1af2c20c28e0018f29535eb85d15b6");
-                AddToken("CPX", "45d493a6f73fa5f404244a5fb8472fc014ca5885");
-                AddToken("ACAT", "7f86d61ff377f1b12e589a5907152b57e2ad9a7a");
-                AddToken("NRV", "a721d5893480260bd28ca1f395f2c465d0b5b1c2");
-                AddToken("THOR", "67a5086bac196b67d5fd20745b0dc9db4d2930ed");
-                AddToken("RHT", "2328008e6f6c7bd157a342e789389eb034d9cbc4");
-                AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6");
-                AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd");
-                AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917");
+                _tokenScripts = new Dictionary<string, TokenInfo>();
+                AddToken("RPX", "ecc6b20d3ccac1ee9ef109af5a7cdb85706b1df9", "RedPulse", 8);
+                AddToken("DBC", "b951ecbbc5fe37a9c280a76cb0ce0014827294cf", "DeepBrain", 8);
+                AddToken("QLC", "0d821bd7b6d53f5c2b40e217c6defc8bbe896cf5", "Qlink", 8);
+                AddToken("APH", "a0777c3ce2b169d4a23bcba4565e3225a0122d95", "Aphelion", 8);
+                AddToken("ZPT", "ac116d4b8d4ca55e6b6d4ecce2192039b51cccc5", "Zeepin", 8);
+                AddToken("TKY", "132947096727c84c7f9e076c90f08fec3bc17f18", "TheKey", 8);
+                AddToken("TNC", "08e8c4400f1af2c20c28e0018f29535eb85d15b6", "Trinity", 8);
+                AddToken("CPX", "45d493a6f73fa5f404244a5fb8472fc014ca5885", "APEX", 8);
+                AddToken("ACAT","7f86d61ff377f1b12e589a5907152b57e2ad9a7a", "ACAT", 8);
+                AddToken("NRV", "a721d5893480260bd28ca1f395f2c465d0b5b1c2", "Narrative", 8);
+                AddToken("THOR","67a5086bac196b67d5fd20745b0dc9db4d2930ed", "Thor", 8);
+                AddToken("RHT", "2328008e6f6c7bd157a342e789389eb034d9cbc4", "HashPuppy", 0);
+                AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6", "BridgeProtocol", 8);
+                AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd", "Switcheo", 8);
+                AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917", "Orbis", 8);
             }
 
             return _tokenScripts;
         }
 
-        private static void AddToken(string symbol, string hash)
+        private static void AddToken(string symbol, string hash, string name, int decimals)
         {
-            GetTokenInfo();
-            _tokenScripts[symbol] = hash;
+            _tokenScripts[symbol] = new TokenInfo { symbol = symbol, hash = hash, name = name, decimals = decimals };
         }
 
         public static IEnumerable<string> TokenSymbols
@@ -137,7 +151,7 @@ namespace Neo.Lux.Core
             {
                 if (entry.Key == symbol)
                 {
-                    return GetScriptHashFromString(entry.Value);
+                    return GetScriptHashFromString(entry.Value.hash);
                 }
             }
 
@@ -263,7 +277,7 @@ namespace Neo.Lux.Core
             }
             else
             {
-                throw new Exception("Unsupported contract parameter: " + item.ToString());
+                throw new NeoException("Unsupported contract parameter: " + item.ToString());
             }
         }
 
@@ -622,8 +636,8 @@ namespace Neo.Lux.Core
             var info = GetTokenInfo();
             if (info.ContainsKey(symbol))
             {
-                var tokenScriptHash = info[symbol];
-                return new NEP5(this, tokenScriptHash);
+                var token = info[symbol];
+                return new NEP5(this, token.hash, token.name, new BigInteger(token.decimals));
             }
 
             throw new NeoException("Invalid token symbol");

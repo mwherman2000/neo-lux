@@ -2,6 +2,7 @@
 using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
 using System;
+using System.Globalization;
 
 namespace Neo.Sender
 {
@@ -22,8 +23,16 @@ namespace Neo.Sender
             var keyStr = args[1];
             var outputAddress = args[2];
 
-            var symbol = args[3];   //"GAS"
-            var amount = decimal.Parse(args[4]);
+            var symbol = args[3].ToUpper();   //"GAS"
+
+            string amountStr = args[4];
+            amountStr = amountStr.Replace(",", ".");
+            var amount = Decimal.Parse(amountStr, CultureInfo.InvariantCulture);
+
+            if (amount <= 0 || amount > 10000000) {
+                Console.WriteLine("Invalid amount: " + amount);
+                return;
+            }
 
             var fromKey = keyStr.Length == 52 ? KeyPair.FromWIF(keyStr) : new KeyPair(keyStr.HexToBytes());
 
@@ -34,9 +43,17 @@ namespace Neo.Sender
 
             switch (net)
             {
-                case "main": api = NeoDB.ForMainNet(); break;
-                case "test": api = NeoDB.ForTestNet(); break;
-                default: api = new NeoDB(net); break;
+
+                case "main":
+                    api = NeoDB.ForMainNet();
+                    // api = NeoDB.NewCustomRPC("http://api.wallet.cityofzion.io", "http://seed2.cityofzion.io:8080");
+                    break;
+                case "test":
+                    api = NeoDB.ForTestNet();
+                    break;
+                default:
+                    Console.Error.WriteLine("invalid net");
+                    return;
             }
 
             Transaction tx = null;
