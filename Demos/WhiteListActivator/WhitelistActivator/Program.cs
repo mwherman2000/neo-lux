@@ -10,7 +10,7 @@ using Neo.Lux.Utils;
 using Neo.Lux.Core;
 using Neo.Lux.Cryptography;
 
-namespace NeoLux.WhiteList
+namespace Neo.Lux.WhiteList
 {
     class WhitelistActivator
     {

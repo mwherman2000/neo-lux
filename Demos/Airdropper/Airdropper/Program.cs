@@ -7,7 +7,7 @@ using Neo.Lux.Cryptography;
 using Neo.Lux.Core;
 using Neo.Lux.Utils;
 
-namespace NeoLux.WhiteList
+namespace Neo.Lux.Airdropper
 {
     public class Target
     {

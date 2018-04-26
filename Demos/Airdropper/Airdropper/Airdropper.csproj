@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A3C0D779-4811-4EA7-923A-92F245280D9E}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>WhitelistActivator</RootNamespace>
-    <AssemblyName>WhitelistActivator</AssemblyName>
+    <RootNamespace>Airdropper</RootNamespace>
+    <AssemblyName>Airdropper</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
