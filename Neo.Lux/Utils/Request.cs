@@ -1,5 +1,6 @@
 ﻿using LunarParser;
 using LunarParser.JSON;
+using System;
 using System.Net;
 
 namespace Neo.Lux.Utils
@@ -16,20 +17,32 @@ namespace Neo.Lux.Utils
         {
             string contents;
 
-            switch (kind) {
-                case RequestType.GET:
-                    {
-                        contents = GetWebRequest(url); break;
-                    }
-                case RequestType.POST:
-                    {
-                        var paramData = data != null ? JSONWriter.WriteToString(data): "{}";
-                        contents = PostWebRequest(url, paramData);
-                        break;
-                    }
-                default: return null;
+            try
+            {
+                switch (kind)
+                {
+                    case RequestType.GET:
+                        {
+                            contents = GetWebRequest(url); break;
+                        }
+                    case RequestType.POST:
+                        {
+                            var paramData = data != null ? JSONWriter.WriteToString(data) : "{}";
+                            contents = PostWebRequest(url, paramData);
+                            break;
+                        }
+                    default: return null;
+                }
+            }
+            catch (Exception e)
+            {
+                return null;
             }
 
+            if (string.IsNullOrEmpty(contents))
+            {
+                return null;
+            }
 
             //File.WriteAllText("response.json", contents);
 
