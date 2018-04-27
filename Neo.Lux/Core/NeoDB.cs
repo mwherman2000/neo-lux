@@ -150,7 +150,7 @@ namespace Neo.Lux.Core
             return result;
         }
 
-        public DataNode QueryRPC(string method, object[] _params, int id = 1)
+        public override DataNode QueryRPC(string method, object[] _params, int id = 1)
         {
             var paramData = DataNode.CreateArray("params");
             foreach (var entry in _params)

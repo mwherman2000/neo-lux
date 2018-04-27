@@ -675,6 +675,7 @@ namespace Neo.Lux.Core
             return response.GetInt32("block_height");
         }*/
 
+        public abstract DataNode QueryRPC(string method, object[] _params, int id = 1);
 
     }
 

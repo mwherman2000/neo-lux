@@ -135,7 +135,7 @@ namespace Neo.Lux.Core
             }
         }
 
-        public DataNode QueryRPC(string method, object[] _params, int id = 1)
+        public override DataNode QueryRPC(string method, object[] _params, int id = 1)
         {
 
             var paramData = DataNode.CreateArray("params");
