@@ -33,11 +33,12 @@ namespace Neo.Lux.Core
         {
             get
             {
+                InvokeResult response = null;
                 try
                 {
                     if (_name == null)
                     {
-                        var response = api.TestInvokeScript(contractHash, "name", new object[] { "" });
+                        response = api.TestInvokeScript(contractHash, "name", new object[] { "" });
                         _name = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
                     }
 
@@ -55,21 +56,22 @@ namespace Neo.Lux.Core
         public string Symbol
         {
             get
-            {
+             {
+                InvokeResult response = null;
                 try
                 {
                     if (_symbol == null)
                 {
-                    var response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
+                    response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
                     _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
                 }
 
                 return _symbol;
                 }
-                catch
+                catch (Exception e)
                 {
-                throw new NeoException("Api did not return a value.");
-            }
+                    throw new NeoException("Api did not return a value.", e);
+                }
         }
     }
 
@@ -78,11 +80,12 @@ namespace Neo.Lux.Core
         {
             get
             {
+                InvokeResult response = null;
                 try
                 {
                     if (_decimals < 0)
                     {
-                        var response = api.TestInvokeScript(contractHash, "decimals", new object[] { "" });
+                        response = api.TestInvokeScript(contractHash, "decimals", new object[] { "" });
                         _decimals = (BigInteger)response.result[0];
                     }
 
@@ -102,11 +105,12 @@ namespace Neo.Lux.Core
         {
             get
             {
+                InvokeResult response = null;
                 try
                 {
                     if (_totalSupply < 0)
                     {
-                        var response = api.TestInvokeScript(contractHash, "totalSupply", new object[] { "" });
+                        response = api.TestInvokeScript(contractHash, "totalSupply", new object[] { "" });
                         _totalSupply = new BigInteger((byte[])response.result[0]);
 
                         var decs = Decimals;

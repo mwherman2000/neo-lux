@@ -21,7 +21,7 @@ namespace Neo.Lux.Core
         }
     }
 
-    public struct InvokeResult
+    public class InvokeResult
     {
         public string state;
         public decimal gasSpent;
