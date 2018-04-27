@@ -166,16 +166,31 @@ namespace Neo.Lux.Core
 
             DataNode response;
 
-            if (rpcEndpoint == null)
+            int retryCount = 0;
+            do
             {
-                response = RequestUtils.Request(RequestType.GET, apiEndpoint + "/v2/network/best_node");
-                rpcEndpoint = response.GetString("node");
-                Console.WriteLine("Update RPC Endpoint: " + rpcEndpoint);
-            }
+                if (rpcEndpoint == null)
+                {
+                    response = RequestUtils.Request(RequestType.GET, apiEndpoint + "/v2/network/best_node");
+                    rpcEndpoint = response.GetString("node");
+                    Console.WriteLine("Update RPC Endpoint: " + rpcEndpoint);
+                }
 
-            Console.WriteLine("NeoDB QueryRPC: " + rpcEndpoint + "\nInput Data: " + dataToString(jsonRpcData));
-            response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
-            // Console.WriteLine("Resp " + response.GetBool("result"));
+                Console.WriteLine("NeoDB QueryRPC: " + rpcEndpoint + "\nInput Data: " + dataToString(jsonRpcData));
+                response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
+                // Console.WriteLine("Resp " + response.GetBool("result"));            
+
+                if (response != null && response.HasNode("result"))
+                {
+                    break;
+                }
+                else
+                {
+                    rpcEndpoint = null;
+                    retryCount++;
+                }
+
+            } while (retryCount < 5);
 
             return response;
         }
