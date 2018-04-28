@@ -18,15 +18,14 @@ namespace NeoBlocks
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Write an NEO address to listen:");
             string address;
 
             do
             {
+                Console.WriteLine("Write an NEO address to listen:");
                 address = Console.ReadLine();
             } while (!address.IsValidAddress());
-            
-            
+                       
             var api = NeoRPC.ForTestNet();
 
             var oldBlockCount = api.GetBlockHeight();
@@ -44,12 +43,18 @@ namespace NeoBlocks
 
                 if (newBlockCount != oldBlockCount)
                 {
-                    oldBlockCount = newBlockCount;
-
                     Console.WriteLine($"Fetching block {newBlockCount}");
 
                     // retrieve latest block
                     var block = api.GetBlock(newBlockCount);
+
+                    if (block == null)
+                    {
+                        Console.WriteLine($"Failed...");
+                        continue;
+                    }
+
+                    oldBlockCount = newBlockCount;
 
                     // inspect each tx in the block for inputs sent to the target address
                     foreach (var tx in block.transactions)
