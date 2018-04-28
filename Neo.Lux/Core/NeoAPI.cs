@@ -5,6 +5,7 @@ using System.Linq;
 using Neo.Lux.Cryptography;
 using System.Numerics;
 using Neo.Lux.Utils;
+using System.IO;
 
 namespace Neo.Lux.Core
 {
@@ -62,6 +63,18 @@ namespace Neo.Lux.Core
                 var info = GetAssetsInfo();
                 return info.Keys;
             }
+        }
+
+        public static string SymbolFromAssetID(byte[] assetID)
+        {
+            var str = assetID.ByteToHex();
+            var result = SymbolFromAssetID(str);
+            if (result == null)
+            {
+                result = SymbolFromAssetID(LuxUtils.ReverseHex(str));
+            }
+
+            return result;
         }
 
         public static string SymbolFromAssetID(string assetID)
@@ -675,7 +688,81 @@ namespace Neo.Lux.Core
             return response.GetInt32("block_height");
         }*/
 
-        public abstract DataNode QueryRPC(string method, object[] _params, int id = 1);
+        public string rpcEndpoint { get; private set; }
+
+
+        protected abstract string GetRPCEndpoint();
+
+        public DataNode QueryRPC(string method, object[] _params, int id = 1)
+        {
+            var paramData = DataNode.CreateArray("params");
+            foreach (var entry in _params)
+            {
+                paramData.AddField(null, entry);
+            }
+
+            var jsonRpcData = DataNode.CreateObject(null);
+            jsonRpcData.AddField("method", method);
+            jsonRpcData.AddNode(paramData);
+            jsonRpcData.AddField("id", id);
+            jsonRpcData.AddField("jsonrpc", "2.0");
+
+            int retryCount = 0;
+            do
+            {
+                if (rpcEndpoint == null)
+                {
+                    rpcEndpoint = GetRPCEndpoint();
+                }
+
+                var response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
+
+                if (response != null && response.HasNode("result"))
+                {
+                    return response;
+                }
+                else
+                {
+                    rpcEndpoint = null;
+                    retryCount++;
+                }
+
+            } while (retryCount < 5);
+
+            return null;
+        }
+
+        #region BLOCKS
+        public uint GetBlockHeight()
+        {
+            var response = QueryRPC("getblockcount", new object[] { });
+            var blockCount = response.GetUInt32("result");
+            return blockCount;
+        }
+
+        public Block GetBlock(uint height)
+        {
+            var response = QueryRPC("getblock", new object[] { height });
+            if (response == null || !response.HasNode("result"))
+            {
+                return null;
+            }
+
+            var result = response.GetString("result");
+
+            var bytes = result.HexToBytes();
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                using (var reader = new BinaryReader(stream))
+                {
+                    var block = Block.Unserialize(reader);
+                    return block;
+                }
+            }
+        }
+        #endregion
+
 
     }
 

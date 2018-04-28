@@ -9,18 +9,10 @@ namespace Neo.Lux.Core
     public class NeoDB : NeoAPI
     {
         public readonly string apiEndpoint;
-        public string rpcEndpoint = null;
 
         public NeoDB(string apiEndpoint)
         {
             this.apiEndpoint = apiEndpoint;
-        }
-
-        public static NeoDB NewCustomRPC(string apiEndpoint, string rpcEndpoint)
-        {
-            NeoDB neo = new NeoDB(apiEndpoint);
-            neo.rpcEndpoint = rpcEndpoint;
-            return neo;
         }
 
         public static NeoDB ForMainNet()
@@ -31,18 +23,6 @@ namespace Neo.Lux.Core
         public static NeoDB ForTestNet()
         {
             return new NeoDB("http://testnet-api.wallet.cityofzion.io");
-        }
-
-        // move to LunarParser
-        public string dataToString(DataNode node, int ident = 0)
-        {
-            string resp = "";
-            for (int i = 0; i < ident; i++)
-                resp += "\t";
-            resp += node.Name + ": " + node.Value + "\n";
-            foreach (DataNode child in node.Children)
-                resp += dataToString(child, ident+1);
-            return resp;
         }
 
         public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
@@ -150,51 +130,6 @@ namespace Neo.Lux.Core
             return result;
         }
 
-        public override DataNode QueryRPC(string method, object[] _params, int id = 1)
-        {
-            var paramData = DataNode.CreateArray("params");
-            foreach (var entry in _params)
-            {
-                paramData.AddField(null, entry);
-            }
-
-            var jsonRpcData = DataNode.CreateObject(null);
-            jsonRpcData.AddField("method", method);
-            jsonRpcData.AddNode(paramData);
-            jsonRpcData.AddField("id", id);
-            jsonRpcData.AddField("jsonrpc", "2.0");
-
-            DataNode response;
-
-            int retryCount = 0;
-            do
-            {
-                if (rpcEndpoint == null)
-                {
-                    response = RequestUtils.Request(RequestType.GET, apiEndpoint + "/v2/network/best_node");
-                    rpcEndpoint = response.GetString("node");
-                    Console.WriteLine("Update RPC Endpoint: " + rpcEndpoint);
-                }
-
-                Console.WriteLine("NeoDB QueryRPC: " + rpcEndpoint + "\nInput Data: " + dataToString(jsonRpcData));
-                response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
-                // Console.WriteLine("Resp " + response.GetBool("result"));            
-
-                if (response != null && response.HasNode("result"))
-                {
-                    break;
-                }
-                else
-                {
-                    rpcEndpoint = null;
-                    retryCount++;
-                }
-
-            } while (retryCount < 5);
-
-            return response;
-        }
-
         public override Transaction GetTransaction(string hash)
         {
             var response = QueryRPC("getrawtransaction", new object[] { hash});
@@ -208,6 +143,12 @@ namespace Neo.Lux.Core
             {
                 return null;
             }
+        }
+
+        protected override string GetRPCEndpoint()
+        {
+            var response = RequestUtils.Request(RequestType.GET, apiEndpoint + "/v2/network/best_node");
+            return response.GetString("node");
         }
     }
 }
