@@ -42,6 +42,25 @@ namespace Neo.Lux.Utils
             return result;
         }
 
+        public static bool IsValidAddress(this string address)
+        {
+            if (string.IsNullOrEmpty(address))
+            {
+                return false;
+            }
+
+            if (address.Length != 34)
+            {
+                return false;
+            }
+
+            byte[] buffer = Base58.Decode(address);
+            if (buffer.Length < 4) return false;
+
+            byte[] checksum = buffer.Sha256(0, buffer.Length - 4).Sha256();
+            return buffer.Skip(buffer.Length - 4).SequenceEqual(checksum.Take(4));
+        }
+
         public static byte[] ReadVarBytes(this BinaryReader reader, int max = 0X7fffffc7)
         {
             return reader.ReadBytes((int)reader.ReadVarInt((ulong)max));
