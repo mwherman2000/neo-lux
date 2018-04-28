@@ -9,10 +9,10 @@
     <Description>NEO lightwallet / blockchain API for C#. Allows you to interact with smart contracts in the NEO blockchain.</Description>
     <PackageProjectUrl>https://github.com/CityOfZion/neo-lux</PackageProjectUrl>
     <RepositoryUrl>https://github.com/CityOfZion/neo-lux</RepositoryUrl>
-    <Version>0.6.4</Version>
-    <AssemblyVersion>0.6.4.0</AssemblyVersion>
+    <Version>0.6.5</Version>
+    <AssemblyVersion>0.6.5.0</AssemblyVersion>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <FileVersion>0.6.4.0</FileVersion>
+    <FileVersion>0.6.5.0</FileVersion>
     <PackageTags>NEO Emulator dApp Wallet Blockchain Smart Contract</PackageTags>
     <PackageId>NeoLux</PackageId>
   </PropertyGroup>
