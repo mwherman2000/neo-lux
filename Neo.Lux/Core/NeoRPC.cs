@@ -29,7 +29,7 @@ namespace Neo.Lux.Core
 
         public static NeoRPC ForPrivateNet()
         {
-            return new LocalRPCNode(10332, "http://localhost:4000");
+            return new LocalRPCNode(30333, "http://localhost:4000");
         }
 
         public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
