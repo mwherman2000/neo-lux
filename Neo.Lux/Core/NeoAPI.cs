@@ -39,6 +39,18 @@ namespace Neo.Lux.Core
     {
         private static Dictionary<string, string> _systemAssets = null;
 
+        private Action<string> Logger;
+
+        public void SetLogger(Action<string> logger = null)
+        {
+            this.Logger = logger != null ? logger : DummyLogger;
+        }
+
+        private void DummyLogger(string s)
+        {
+
+        }
+
         internal static Dictionary<string, string> GetAssetsInfo()
         {
             if (_systemAssets == null)
@@ -713,6 +725,13 @@ namespace Neo.Lux.Core
                 if (rpcEndpoint == null)
                 {
                     rpcEndpoint = GetRPCEndpoint();
+                    Logger("Update RPC Endpoint: " + rpcEndpoint);
+                }
+
+                if (Logger != DummyLogger)
+                {
+                    Logger("NeoDB QueryRPC: " + rpcEndpoint);
+                    LogData(jsonRpcData);
                 }
 
                 var response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
@@ -723,6 +742,15 @@ namespace Neo.Lux.Core
                 }
                 else
                 {
+                    if (response != null && response.HasNode("error"))
+                    {
+                        var error = response["error"];
+                        Logger("RPC Error: " + error.GetString("message"));
+                    }
+                    else
+                    {
+                        Logger("No answer");
+                    }
                     rpcEndpoint = null;
                     retryCount++;
                 }
@@ -730,6 +758,14 @@ namespace Neo.Lux.Core
             } while (retryCount < 5);
 
             return null;
+        }
+
+        private void LogData(DataNode node, int ident = 0)
+        {
+            var tabs = new string('\t', ident);
+            Logger($"{tabs}{node}");
+            foreach (DataNode child in node.Children)
+                LogData(child, ident + 1);
         }
 
         #region BLOCKS

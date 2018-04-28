@@ -10,7 +10,7 @@ namespace Neo.Lux.Core
     {
         public readonly string apiEndpoint;
 
-        public NeoDB(string apiEndpoint)
+        public NeoDB(string apiEndpoint) 
         {
             this.apiEndpoint = apiEndpoint;
         }
