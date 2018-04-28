@@ -1,7 +1,7 @@
 ﻿/*
  * Title: AddressListener
  * Author: Sergio Flores
- * Description: This demo shows how to listen for incoming transactions on a specific address.
+ * Description: This demo shows how to listen for incoming transactions on a specific address on test net.
  * This can be used for example for implementing a payment system.
  */
 
@@ -23,12 +23,11 @@ namespace NeoBlocks
 
             do
             {
-                address = "AeaUufDfUBPgAW3ZeQjePbzJnCgakDn6xg";
-//                address = Console.ReadLine();
+                address = Console.ReadLine();
             } while (!address.IsValidAddress());
             
             
-            var api = NeoRPC.ForMainNet();
+            var api = NeoRPC.ForTestNet();
 
             var oldBlockCount = api.GetBlockHeight();
 
@@ -39,13 +38,11 @@ namespace NeoBlocks
             do
             {
                 // wait for block generation
-                //Thread.Sleep(10000);
+                Thread.Sleep(10000);
 
-                //var newBlockCount = api.GetBlockHeight();
+                var newBlockCount = api.GetBlockHeight();
 
-                uint newBlockCount = 2201599;
-
-                //if (newBlockCount != oldBlockCount)
+                if (newBlockCount != oldBlockCount)
                 {
                     oldBlockCount = newBlockCount;
 
