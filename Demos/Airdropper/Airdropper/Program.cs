@@ -15,7 +15,13 @@ namespace Neo.Lux.Airdropper
         {
             var api = NeoDB.ForMainNet();
 
-            api.SetLogger(x => Console.WriteLine(x));
+            api.SetLogger(x =>
+            {
+                var temp = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine(x);
+                Console.ForegroundColor = temp;
+            });
             
             string privateKey;
             byte[] scriptHash = null;
@@ -31,6 +37,9 @@ namespace Neo.Lux.Airdropper
                 }
             } while (true);
 
+            var keys = KeyPair.FromWIF(privateKey);
+            Console.WriteLine("Public address: " + keys.address);
+
             do
             {
                 Console.Write("Enter contract script hash or token symbol: ");
@@ -45,9 +54,18 @@ namespace Neo.Lux.Airdropper
 
             } while (scriptHash == null);
 
-            var keys = KeyPair.FromWIF(privateKey);
 
             var token = new NEP5(api, scriptHash);
+
+            decimal amount;
+            Console.WriteLine($"Write amount of {token.Symbol} to distribute to each address:");
+            do
+            {
+                if (decimal.TryParse(Console.ReadLine(), out amount) && amount > 0)
+                {
+                    break;
+                }
+            } while (true);
 
             string fileName;
 
@@ -78,16 +96,6 @@ namespace Neo.Lux.Airdropper
                 lines = new List<string>() { fileName };
             }
 
-            decimal amount;
-            Console.WriteLine($"Write amount of {token.Symbol} to distribute to each address:");
-            do
-            {
-                if (decimal.TryParse(Console.ReadLine(), out amount) && amount > 0)
-                {
-                    break;
-                }
-            } while (true);
-
 
             int skip = 0;
             int done = 0;
@@ -95,6 +103,8 @@ namespace Neo.Lux.Airdropper
             Console.WriteLine($"Initializing {token.Name} airdrop...");
 
             var srcBalance = token.BalanceOf(keys);
+            Console.WriteLine($"Balance of {keys.address} is {srcBalance} {token.Symbol}");
+
             var minimum = lines.Count * amount;
             if (srcBalance < minimum)
             {
@@ -141,8 +151,6 @@ namespace Neo.Lux.Airdropper
                     newBlock = api.GetBlockHeight();
                 } while (newBlock <= oldBlock);
 
-                bool found = false;
-
                 oldBlock++;
                 while (oldBlock < newBlock)
                 {
@@ -154,7 +162,6 @@ namespace Neo.Lux.Airdropper
                         {
                             if (entry.Hash == tx.Hash)
                             {
-                                found = true;
                                 oldBlock = newBlock;
                                 break;
                             }
@@ -175,6 +182,10 @@ namespace Neo.Lux.Airdropper
                 var newBalance = token.BalanceOf(hash);
 
                 Console.WriteLine($"Got {newBalance} {token.Symbol}.");*/
+
+                File.AppendAllText("airdrop_result.txt", $"{address},{tx.Hash}\n");
+
+                done++;
             }
 
             Console.WriteLine($"Skipped {skip} invalid addresses.");
