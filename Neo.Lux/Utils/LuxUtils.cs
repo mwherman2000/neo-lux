@@ -54,7 +54,17 @@ namespace Neo.Lux.Utils
                 return false;
             }
 
-            byte[] buffer = Base58.Decode(address);
+            byte[] buffer;
+            try
+            {
+                buffer = Base58.Decode(address);
+
+            }
+            catch
+            {
+                return false;
+            }
+
             if (buffer.Length < 4) return false;
 
             byte[] checksum = buffer.Sha256(0, buffer.Length - 4).Sha256();
