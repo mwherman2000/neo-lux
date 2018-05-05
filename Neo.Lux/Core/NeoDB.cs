@@ -33,24 +33,25 @@ namespace Neo.Lux.Core
 
         public InvokeResult TestInvokeScript(byte[] script)
         {
-            var invoke = new InvokeResult();
-            invoke.state = null;
-
             var response = QueryRPC("invokescript", new object[] { script.ByteToHex() });
             if (response != null)
             {
                 var root = response["result"];
                 if (root != null)
                 {
+                    var invoke = new InvokeResult();
+
                     var stack = root["stack"];
                     invoke.result = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
                     invoke.state = root.GetString("state");
+
+                    return invoke;
                 }
             }
 
-            return invoke;
+            return null;
         }
 
         public override bool SendRawTransaction(string hexTx)
