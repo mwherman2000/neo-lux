@@ -1,4 +1,5 @@
 ﻿using Neo.Lux.Cryptography;
+using Neo.Lux.Cryptography.ECC;
 using Neo.Lux.Utils;
 using System;
 using System.IO;
@@ -7,6 +8,19 @@ using System.Text;
 
 namespace Neo.Lux.Core
 {
+    public enum AssetType : byte
+    {
+        CreditFlag = 0x40,
+        DutyFlag = 0x80,
+
+        GoverningToken = 0x00,
+        UtilityToken = 0x01,
+        Currency = 0x08,
+        Share = DutyFlag | 0x10,
+        Invoice = DutyFlag | 0x18,
+        Token = CreditFlag | 0x20,
+    }
+
     public enum TransactionAttributeUsage
     {
         ContractHash = 0x00,
@@ -296,6 +310,48 @@ namespace Neo.Lux.Core
                     }
 
                 case TransactionType.ContractTransaction:
+                    {
+                        break;
+                    }
+
+                case TransactionType.PublishTransaction:
+                    {
+                        var Script = reader.ReadVarBytes();
+                        var ParameterList = reader.ReadVarBytes();
+                        var ReturnType = reader.ReadByte();
+                        bool NeedStorage;
+                        if (tx.version >= 1)
+                            NeedStorage = reader.ReadBoolean();
+                        else
+                            NeedStorage = false;
+                        var Name = reader.ReadVarString();
+                        var CodeVersion = reader.ReadVarString();
+                        var Author = reader.ReadVarString();
+                        var Email = reader.ReadVarString();
+                        var Description = reader.ReadVarString();
+                        break;
+                    }
+
+                case TransactionType.EnrollmentTransaction:
+                    {
+                        var PublicKey = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
+                        break;
+                    }
+
+                case TransactionType.RegisterTransaction:
+                    {
+                        var AssetType = (AssetType)reader.ReadByte();
+                        var Name = reader.ReadVarString();
+                        var Amount = reader.ReadFixed();
+                        var Precision = reader.ReadByte();
+                        var Owner = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
+                        if (Owner.IsInfinity && AssetType != AssetType.GoverningToken && AssetType != AssetType.UtilityToken)
+                            throw new FormatException();
+                        var Admin = reader.ReadBytes(20);
+                        break;
+                    }
+
+                case TransactionType.IssueTransaction:
                     {
                         break;
                     }
