@@ -134,12 +134,28 @@ namespace Neo.Lux.Airdropper
                 Console.WriteLine($"Sending {token.Symbol} to  {address}");
                 Transaction tx;
 
+                int tryCount = 0;
+                int tryLimit = 30;
                 do
                 {
                     tx = token.Transfer(keys, address, amount);
                     Thread.Sleep(1000);
 
-                } while (tx == null);
+                    if (tx != null)
+                    {
+                        break;
+                    }
+
+                    Console.WriteLine("Tx failed, retrying...");
+
+                    tryCount++;
+                } while (tryCount<tryLimit);
+
+                if (tryCount >= tryLimit)
+                {
+                    Console.WriteLine("Try limit reached, internal problem maybe?");
+                    break;
+                }
 
                 Console.WriteLine("Unconfirmed transaction: " + tx.Hash);
 
@@ -176,7 +192,10 @@ namespace Neo.Lux.Airdropper
 
                 }
 
+                var ctemp = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("Confirmed transaction: " + tx.Hash);
+                Console.ForegroundColor = ctemp;
 
                 /*Console.WriteLine($"Confirming balance: {address}. Should have {balance + amount} {token.Symbol} or more.");
                 var newBalance = token.BalanceOf(hash);
