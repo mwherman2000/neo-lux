@@ -39,11 +39,19 @@ namespace Neo.Lux.Core
     {
         private static Dictionary<string, string> _systemAssets = null;
 
-        private Action<string> Logger;
+        private Action<string> _logger;
+        public Action<string> Logger
+        {
+            get
+            {
+                return _logger != null ? _logger : DummyLogger;
+            }
+        }
+
 
         public void SetLogger(Action<string> logger = null)
         {
-            this.Logger = logger != null ? logger : DummyLogger;
+            this._logger = logger;
         }
 
         private void DummyLogger(string s)
@@ -719,6 +727,12 @@ namespace Neo.Lux.Core
             jsonRpcData.AddField("id", id);
             jsonRpcData.AddField("jsonrpc", "2.0");
 
+            if (Logger != DummyLogger)
+            {
+                Logger("NeoDB QueryRPC: " + method);
+                LogData(jsonRpcData);
+            }
+
             int retryCount = 0;
             do
             {
@@ -726,12 +740,6 @@ namespace Neo.Lux.Core
                 {
                     rpcEndpoint = GetRPCEndpoint();
                     Logger("Update RPC Endpoint: " + rpcEndpoint);
-                }
-
-                if (Logger != DummyLogger)
-                {
-                    Logger("NeoDB QueryRPC: " + rpcEndpoint);
-                    LogData(jsonRpcData);
                 }
 
                 var response = RequestUtils.Request(RequestType.POST, rpcEndpoint, jsonRpcData);
@@ -755,7 +763,7 @@ namespace Neo.Lux.Core
                     retryCount++;
                 }
 
-            } while (retryCount < 5);
+            } while (retryCount < 10);
 
             return null;
         }
