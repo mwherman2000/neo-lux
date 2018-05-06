@@ -11,16 +11,20 @@ namespace Neo.Lux.Airdropper
 {
     class AirDropper
     {
+        static void ColorPrint(ConsoleColor color, string text) {
+            var ctemp = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.WriteLine(text);
+            Console.ForegroundColor = ctemp;
+        }
+
         static void Main()
         {
             var api = NeoDB.ForMainNet();
 
             api.SetLogger(x =>
             {
-                var temp = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine(x);
-                Console.ForegroundColor = temp;
+                ColorPrint(ConsoleColor.DarkGray, x);
             });
             
             string privateKey;
@@ -35,6 +39,7 @@ namespace Neo.Lux.Airdropper
                 {
                     break;
                 }
+
             } while (true);
 
             var keys = KeyPair.FromWIF(privateKey);
@@ -108,7 +113,7 @@ namespace Neo.Lux.Airdropper
             var minimum = lines.Count * amount;
             if (srcBalance < minimum)
             {
-                Console.WriteLine($"Error: For this Airdrop you need at least {minimum} {token.Symbol} at {keys.address}");
+                ColorPrint(ConsoleColor.Red, $"Error: For this Airdrop you need at least {minimum} {token.Symbol} at {keys.address}");
                 Console.ReadLine();
                 return;
             }
@@ -118,11 +123,10 @@ namespace Neo.Lux.Airdropper
             foreach (var temp in lines)
             {
                 var address = temp.Trim();
-                if (address.Length != 34 || !address.StartsWith("A"))
+                if (!address.IsValidAddress())
                 {
                     skip++;
-                    lines.RemoveAt(0);
-                    Console.WriteLine("Invalid address: " + address);
+                    ColorPrint(ConsoleColor.Yellow, "Invalid address: " + address);
                     continue;
                 }
 
@@ -134,26 +138,45 @@ namespace Neo.Lux.Airdropper
                 Console.WriteLine($"Sending {token.Symbol} to  {address}");
                 Transaction tx;
 
-                int tryCount = 0;
-                int tryLimit = 30;
+                int failCount = 0;
+                int failLimit = 20;
                 do
                 {
-                    tx = token.Transfer(keys, address, amount);
-                    Thread.Sleep(1000);
+                    int tryCount = 0;
+                    int tryLimit = 3;
+                    do
+                    {
+                        tx = token.Transfer(keys, address, amount);
+                        Thread.Sleep(1000);
+
+                        if (tx != null)
+                        {
+                            break;
+                        }
+
+                        Console.WriteLine("Tx failed, retrying...");
+
+                        tryCount++;
+                    } while (tryCount < tryLimit);
+
 
                     if (tx != null)
                     {
                         break;
                     }
+                    else
+                    {
 
-                    Console.WriteLine("Tx failed, retrying...");
+                        Console.WriteLine("Changing RPC server...");
+                        Thread.Sleep(2000);
+                        api.rpcEndpoint = null;
+                        failCount++;
+                    }
+                } while (failCount< failLimit);
 
-                    tryCount++;
-                } while (tryCount<tryLimit);
-
-                if (tryCount >= tryLimit)
+                if (failCount >= failLimit || tx == null)
                 {
-                    Console.WriteLine("Try limit reached, internal problem maybe?");
+                    ColorPrint(ConsoleColor.Red, "Try limit reached, internal problem maybe?");
                     break;
                 }
 
@@ -192,16 +215,9 @@ namespace Neo.Lux.Airdropper
 
                 }
 
-                var ctemp = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("Confirmed transaction: " + tx.Hash);
-                Console.ForegroundColor = ctemp;
 
-                /*Console.WriteLine($"Confirming balance: {address}. Should have {balance + amount} {token.Symbol} or more.");
-                var newBalance = token.BalanceOf(hash);
-
-                Console.WriteLine($"Got {newBalance} {token.Symbol}.");*/
-
+                ColorPrint(ConsoleColor.Green, "Confirmed transaction: " + tx.Hash);
+ 
                 File.AppendAllText("airdrop_result.txt", $"{address},{tx.Hash}\n");
 
                 done++;
