@@ -708,7 +708,7 @@ namespace Neo.Lux.Core
             return response.GetInt32("block_height");
         }*/
 
-        public string rpcEndpoint { get; private set; }
+        public string rpcEndpoint { get; set; }
 
 
         protected abstract string GetRPCEndpoint();
