@@ -188,7 +188,7 @@ namespace Neo.Lux.Airdropper
                 {
                     Thread.Sleep(5000);
                     newBlock = api.GetBlockHeight();
-                } while (newBlock <= oldBlock);
+                } while (newBlock == oldBlock);
 
                 oldBlock++;
                 while (oldBlock < newBlock)
