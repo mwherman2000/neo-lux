@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2037
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeoBlocks", "NeoBlocks\NeoBlocks.csproj", "{E44A4FAB-420A-4196-A6BE-90CC1CFE1B07}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Neo.Lux", "..\..\Neo.Lux\Neo.Lux.csproj", "{CE711240-AF53-4FCF-9ABB-B38F04A3330E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E44A4FAB-420A-4196-A6BE-90CC1CFE1B07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E44A4FAB-420A-4196-A6BE-90CC1CFE1B07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E44A4FAB-420A-4196-A6BE-90CC1CFE1B07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E44A4FAB-420A-4196-A6BE-90CC1CFE1B07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE711240-AF53-4FCF-9ABB-B38F04A3330E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE711240-AF53-4FCF-9ABB-B38F04A3330E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE711240-AF53-4FCF-9ABB-B38F04A3330E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE711240-AF53-4FCF-9ABB-B38F04A3330E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ED82BC08-5C3F-4FD5-8803-0D3C96A5981C}
+	EndGlobalSection
+EndGlobal
