@@ -57,7 +57,7 @@ namespace Neo.Lux.Core
         public override bool SendRawTransaction(string hexTx)
         {
             var response = QueryRPC("sendrawtransaction", new object[] { hexTx });
-            return response.GetBool("result");
+            return response != null ? response.GetBool("result") : false;
         }
 
         public override byte[] GetStorage(string scriptHash, byte[] key)
@@ -95,7 +95,32 @@ namespace Neo.Lux.Core
 
         public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
         {
-            var url = apiEndpoint + "/v2/address/balance/" + address;
+            var url = "https://neoscan.io/api/main_net/v1/get_balance/" + address;
+            var json = RequestUtils.GetWebRequest(url);
+
+            var root = LunarParser.JSON.JSONReader.ReadFromString(json);
+            var unspents = new Dictionary<string, List<UnspentEntry>>();
+
+            root = root["balance"];
+
+            foreach (var child in root.Children)
+            {
+                var symbol = child.GetString("asset");
+
+                List<UnspentEntry> list = new List<UnspentEntry>();
+                unspents[symbol] = list;
+
+                var unspentNode = child.GetNode("unspent");
+                foreach (var entry in unspentNode.Children)
+                {
+                    var temp = new UnspentEntry() { txid = entry.GetString("txid"), value = entry.GetDecimal("value"), index = entry.GetUInt32("n") };
+                    list.Add(temp);
+                }
+            }
+
+            return unspents;
+
+/*            var url = apiEndpoint + "/v2/address/balance/" + address;
             var response = RequestUtils.Request(RequestType.GET, url);
 
             var result = new Dictionary<string, List<UnspentEntry>>();
@@ -128,7 +153,7 @@ namespace Neo.Lux.Core
                     }
                 }
             }
-            return result;
+            return result;*/
         }
 
         public override Transaction GetTransaction(string hash)
