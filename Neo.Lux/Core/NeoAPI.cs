@@ -354,11 +354,7 @@ namespace Neo.Lux.Core
 
         private void GenerateInputsOutputs(KeyPair key, string symbol, IEnumerable<TransactionOutput> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
         {
-            if (targets == null)
-            {
-                throw new NeoException("Invalid amount list");
-            }
-            
+           
             var unspent = GetUnspent(key.address);
             // filter any asset lists with zero unspent inputs
             unspent = unspent.Where(pair => pair.Value.Count > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -386,14 +382,17 @@ namespace Neo.Lux.Core
             decimal cost = 0;
 
             var fromHash = key.PublicKeyHash.ToArray();
-            foreach (var target in targets)
+            if (targets != null)
             {
-                if (target.addressHash.SequenceEqual(fromHash))
+                foreach (var target in targets)
                 {
-                    throw new NeoException("Target can't be same as input");
-                }
+                    if (target.addressHash.SequenceEqual(fromHash))
+                    {
+                        throw new NeoException("Target can't be same as input");
+                    }
 
-                cost += target.amount;
+                    cost += target.amount;
+                }
             }
 
             var sources = unspent[symbol];
@@ -421,7 +420,7 @@ namespace Neo.Lux.Core
                 throw new NeoException($"Not enough {symbol}");
             }
 
-            if(cost > 0)
+            if(cost > 0 && targets != null)
             {
                 foreach (var target in targets)
                 {
@@ -808,6 +807,67 @@ namespace Neo.Lux.Core
         #endregion
 
 
+        public Transaction DeployContract(KeyPair keys, byte[] script, byte[] parameter_list, byte return_type, ContractPropertyState properties, string name, string version, string author, string email, string description)
+        {
+            if (script.Length > 1024 * 1024) return null;
+
+            byte[] gen_script;
+            using (var sb = new ScriptBuilder())
+            {
+                sb.EmitPush(script);
+                sb.EmitPush(parameter_list);
+                sb.EmitPush(return_type);
+                sb.EmitPush((byte)properties);
+                sb.EmitPush(name);
+                sb.EmitPush(version);
+                sb.EmitPush(author);
+                sb.EmitPush(email);
+                sb.EmitPush(description);
+                sb.EmitSysCall("Neo.Contract.Create");
+
+                gen_script = sb.ToArray();
+
+                //string hex = bytes.ByteToHex();
+                //System.IO.File.WriteAllBytes(@"D:\code\Crypto\neo-debugger-tools\ICO-Template\bin\Debug\inputs.avm", bytes);                
+            }
+
+            decimal fee = 100;
+
+            if (properties.HasFlag(ContractPropertyState.HasStorage))
+            {
+                fee += 400;
+            }
+
+            if (properties.HasFlag(ContractPropertyState.HasDynamicInvoke))
+            {
+                fee += 500;
+            }
+
+            fee -= 10; // first 10 GAS is free
+
+            List<Transaction.Input> inputs;
+            List<Transaction.Output> outputs;
+
+            GenerateInputsOutputs(keys, "GAS", null, out inputs, out outputs);
+
+            Transaction tx = new Transaction()
+            {
+                type = TransactionType.InvocationTransaction,
+                version = 0,
+                script = gen_script,
+                gas = fee,
+                inputs = inputs.ToArray(),
+                outputs = outputs.ToArray()
+            };
+
+            tx.Sign(keys);
+
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
+
+            var ok = SendRawTransaction(hexTx);
+            return ok ? tx : null;
+        }
     }
 
 }
