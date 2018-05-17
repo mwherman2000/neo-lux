@@ -4,10 +4,18 @@ using Neo.Lux.Utils;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace Neo.Lux.Core
 {
+    public enum ContractPropertyState : byte
+    {
+        NoProperty = 0,
+
+        HasStorage = 1 << 0,
+        HasDynamicInvoke = 1 << 1,
+        Payable = 1 << 2
+    }
+
     public enum AssetType : byte
     {
         CreditFlag = 0x40,
