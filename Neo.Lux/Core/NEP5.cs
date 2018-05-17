@@ -10,7 +10,12 @@ namespace Neo.Lux.Core
         private readonly byte[] contractHash;
         private readonly NeoAPI api;
 
-        public NEP5(NeoAPI api, string contractHash) :  this(api, NeoAPI.GetScriptHashFromString(contractHash))
+        public NEP5(NeoAPI api, string contractHash) : this(api, NeoAPI.GetScriptHashFromString(contractHash))
+        {
+
+        }
+
+        public NEP5(NeoAPI api, UInt160 contractHash) : this(api, contractHash.ToArray())
         {
 
         }
@@ -56,24 +61,25 @@ namespace Neo.Lux.Core
         public string Symbol
         {
             get
-             {
+            {
                 InvokeResult response = null;
                 try
                 {
                     if (_symbol == null)
-                {
-                    response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
-                    _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
-                }
+                    {
+                        response = api.TestInvokeScript(contractHash, "symbol", new object[] { "" });
+                        _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.result[0]);
+                    }
 
-                return _symbol;
+                    return _symbol;
                 }
                 catch (Exception e)
                 {
                     throw new NeoException("Api did not return a value.", e);
                 }
+            }
         }
-    }
+
 
         private BigInteger _decimals = -1;
         public BigInteger Decimals
@@ -187,7 +193,7 @@ namespace Neo.Lux.Core
 
         public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
-            Console.WriteLine("NEP5 token " +  Name + " transfer " + value);
+            Console.WriteLine("NEP5 token " + Name + " transfer " + value);
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
@@ -215,7 +221,6 @@ namespace Neo.Lux.Core
             {
                 throw new NeoException("Api did not return a value.", e);
             }
-
         }
 
         public Transaction TransferFrom(byte[] originator, byte[] from, byte[] to, BigInteger amount)
@@ -227,5 +232,12 @@ namespace Neo.Lux.Core
         {
             throw new System.NotImplementedException();
         }
+
+        public Transaction Deploy(KeyPair owner_key)
+        {
+            var response = api.CallContract(owner_key, contractHash, "deploy", new object[] { });
+            return response;
+        }
+
     }
 }
