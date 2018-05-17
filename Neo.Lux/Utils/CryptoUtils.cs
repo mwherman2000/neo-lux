@@ -10,7 +10,7 @@ namespace Neo.Lux.Utils
 {
     public static class CryptoUtils
     {
-        public static string ToAddress(UInt160 scriptHash)
+        public static string ToAddress(this UInt160 scriptHash)
         {
             byte[] data = new byte[21];
             data[0] = 23;
@@ -18,7 +18,7 @@ namespace Neo.Lux.Utils
             return data.Base58CheckEncode();
         }
 
-        public static UInt160 ToScriptHash(byte[] script)
+        public static UInt160 ToScriptHash(this byte[] script)
         {
             return new UInt160(Hash160(script));
         }
