@@ -868,6 +868,56 @@ namespace Neo.Lux.Core
             var ok = SendRawTransaction(hexTx);
             return ok ? tx : null;
         }
+
+        public void WaitForTransaction(Transaction tx)
+        {
+            WaitForTransaction(tx.Hash);
+        }
+
+        public void WaitForTransaction(string hash)
+        {
+            WaitForTransaction(new UInt256(hash.HexToBytes()));
+        }
+
+        public void WaitForTransaction(UInt256 hash)
+        {
+            if (GetTransaction(hash) != null)
+            {
+                return;
+            }
+
+            var startTime = DateTime.UtcNow;
+
+            uint oldBlock = 0;
+            uint curBlock;
+            do
+            {
+                curBlock = GetBlockHeight();
+
+                if (curBlock != oldBlock || oldBlock == 0)
+                {
+                    oldBlock = curBlock;
+
+                    var block = GetBlock(curBlock);
+                    if (block == null)
+                    {
+                        throw new Exception("Invalid block");
+                    }
+
+                    foreach (var tx in block.transactions)
+                    {
+                        if (tx.Hash == hash)
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                Thread.Sleep(15 * 1000);
+            } while (true);
+        }
+
+
     }
 
 }
