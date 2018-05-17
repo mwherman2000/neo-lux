@@ -3,6 +3,7 @@ using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Neo.Lux.Core
 {
@@ -105,14 +106,9 @@ namespace Neo.Lux.Core
             var invoke = new InvokeResult();
             invoke.state = null;
 
-            var temp = new object[args.Length + 1];
-            temp[0] = NeoAPI.GetStringFromScriptHash(scriptHash);
-            for (int i=0; i<args.Length; i++)
-            {
-                temp[i + 1] = args[i];
-            }
+            var script = GenerateScript(scriptHash, args);
 
-            var response = QueryRPC("invokefunction", temp);
+            var response = QueryRPC("invokescript", new object[] { script.ByteToHex()});
 
             if (response != null)
             {
