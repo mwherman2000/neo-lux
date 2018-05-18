@@ -40,6 +40,55 @@ namespace Neo.Lux.Airdropper
 
         static void Main()
         {
+            string fileName;
+
+            do
+            {
+                Console.Write("Enter whitelist file name or NEO address: ");
+                fileName = Console.ReadLine();
+
+                if (!fileName.Contains("."))
+                {
+                    break;
+                }
+
+                if (File.Exists(fileName))
+                {
+                    break;
+                }
+            } while (true);
+
+            List<string> lines;
+
+            if (fileName.Contains("."))
+            {
+                lines = File.ReadAllLines(fileName).ToList();
+            }
+            else
+            {
+                lines = new List<string>() { fileName };
+            }
+
+            if (File.Exists(airdropResultFileName))
+            {
+                var finishedLines = File.ReadAllLines(airdropResultFileName);
+                var finishedAddresses = new HashSet<string>();
+                foreach (var entry in finishedLines)
+                {
+                    var temp = entry.Split(',');
+                    finishedAddresses.Add(temp[0]);
+                }
+
+                var previousTotal = lines.Count;
+
+                lines = lines.Where(x => !finishedAddresses.Contains(x)).ToList();
+
+                var skippedTotal = previousTotal - lines.Count;
+
+                Console.WriteLine($"Skipping {skippedTotal} addresses...");
+
+            }
+
             //var api = NeoDB.ForMainNet();            
             //var api = new LocalRPCNode(10332, "http://neoscan.io");
             var api = new CustomRPCNode();
@@ -93,49 +142,6 @@ namespace Neo.Lux.Airdropper
                     break;
                 }
             } while (true);
-
-            string fileName;
-
-            do
-            {
-                Console.Write("Enter whitelist file name or NEO address: ");
-                fileName = Console.ReadLine();
-
-                if (!fileName.Contains("."))
-                {
-                    break;
-                }
-
-                if (File.Exists(fileName))
-                {
-                    break;
-                }
-            } while (true);
-
-            List<string> lines;
-
-            if (fileName.Contains("."))
-            {
-                lines = File.ReadAllLines(fileName).ToList();
-            }
-            else
-            {
-                lines = new List<string>() { fileName };
-            }
-
-            if (File.Exists(airdropResultFileName))
-            {
-                var finishedAddresses = new HashSet<string>(File.ReadAllLines(airdropResultFileName));
-
-                var previousTotal = lines.Count;
-
-                lines = lines.Where(x => !finishedAddresses.Contains(x)).ToList();
-
-                var skippedTotal = lines.Count - previousTotal;
-
-                Console.WriteLine($"Skipping {token.Name} airdrop...");
-
-            }
 
             int skip = 0;
             int done = 0;
