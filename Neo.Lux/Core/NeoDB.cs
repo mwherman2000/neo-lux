@@ -1,8 +1,5 @@
-﻿using LunarParser;
-using Neo.Lux.Cryptography;
-using Neo.Lux.Utils;
+﻿using Neo.Lux.Utils;
 using System.Collections.Generic;
-using System;
 
 namespace Neo.Lux.Core
 {
@@ -25,13 +22,7 @@ namespace Neo.Lux.Core
             return new NeoDB("http://testnet-api.wallet.cityofzion.io");
         }
 
-        public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
-        {
-            var script = GenerateScript(scriptHash, args);
-            return TestInvokeScript(script);
-        }
-
-        public InvokeResult TestInvokeScript(byte[] script)
+        public override InvokeResult InvokeScript(byte[] script)
         {
             var response = QueryRPC("invokescript", new object[] { script.ByteToHex() });
             if (response != null)
@@ -42,7 +33,7 @@ namespace Neo.Lux.Core
                     var invoke = new InvokeResult();
 
                     var stack = root["stack"];
-                    invoke.result = ParseStack(stack);
+                    invoke.value = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
                     invoke.state = root.GetString("state");

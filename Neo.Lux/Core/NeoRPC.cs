@@ -101,12 +101,10 @@ namespace Neo.Lux.Core
             return result;
         }
 
-        public override InvokeResult TestInvokeScript(byte[] scriptHash, object[] args)
+        public override InvokeResult InvokeScript(byte[] script)
         {
             var invoke = new InvokeResult();
             invoke.state = null;
-
-            var script = GenerateScript(scriptHash, args);
 
             var response = QueryRPC("invokescript", new object[] { script.ByteToHex()});
 
@@ -116,7 +114,7 @@ namespace Neo.Lux.Core
                 if (root != null)
                 {
                     var stack = root["stack"];
-                    invoke.result = ParseStack(stack);
+                    invoke.value = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
                     invoke.state = root.GetString("state");

@@ -137,13 +137,13 @@ namespace Neo.Lux.Core
     {
         public struct Input
         {
-            public byte[] prevHash;
+            public UInt256 prevHash;
             public uint prevIndex;
         }
 
         public struct Output
         {
-            public byte[] scriptHash;
+            public UInt160 scriptHash;
             public byte[] assetID;
             public decimal value;
         }
@@ -163,7 +163,7 @@ namespace Neo.Lux.Core
         #region HELPERS
         protected static void SerializeTransactionInput(BinaryWriter writer, Input input)
         {
-            writer.Write(input.prevHash);
+            writer.Write(input.prevHash.ToArray());
             writer.Write((ushort)input.prevIndex);
         }
 
@@ -171,14 +171,14 @@ namespace Neo.Lux.Core
         {
             writer.Write(output.assetID);
             writer.WriteFixed(output.value);
-            writer.Write(output.scriptHash);
+            writer.Write(output.scriptHash.ToArray());
         }
 
         protected static Input UnserializeTransactionInput(BinaryReader reader)
         {
             var prevHash = reader.ReadBytes(32);
             var prevIndex = reader.ReadUInt16();
-            return new Input() { prevHash = prevHash, prevIndex = prevIndex };
+            return new Input() { prevHash = new UInt256(prevHash), prevIndex = prevIndex };
         }
 
         protected static Output UnserializeTransactionOutput(BinaryReader reader)
@@ -186,7 +186,7 @@ namespace Neo.Lux.Core
             var assetID = reader.ReadBytes(32);
             var value = reader.ReadFixed();
             var scriptHash = reader.ReadBytes(20);
-            return new Output() { assetID = assetID, value = value, scriptHash = scriptHash };
+            return new Output() { assetID = assetID, value = value, scriptHash = new UInt160(scriptHash)};
         }
         #endregion
 

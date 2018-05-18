@@ -6,6 +6,7 @@ using Neo.Lux.Cryptography;
 using System.Numerics;
 using Neo.Lux.Utils;
 using System.IO;
+using System.Threading;
 
 namespace Neo.Lux.Core
 {
@@ -26,7 +27,8 @@ namespace Neo.Lux.Core
     {
         public string state;
         public decimal gasSpent;
-        public object[] result;
+        public object[] value;
+        public Transaction transaction;
     }
 
     public struct TransactionOutput
@@ -48,6 +50,12 @@ namespace Neo.Lux.Core
             }
         }
 
+        private uint oldBlock;
+
+        public NeoAPI()
+        {
+            oldBlock = this.GetBlockHeight();
+        }
 
         public void SetLogger(Action<string> logger = null)
         {
@@ -260,11 +268,18 @@ namespace Neo.Lux.Core
             return null;
         }
 
-        public abstract InvokeResult TestInvokeScript(byte[] scriptHash, object[] args);
+        public abstract InvokeResult InvokeScript(byte[] script);
 
-        public InvokeResult TestInvokeScript(byte[] scriptHash, string operation, object[] args)
+        public InvokeResult InvokeScript(byte[] scriptHash, string operation, object[] args)
         {
-            return TestInvokeScript(scriptHash, new object[] { operation, args });
+            return InvokeScript(scriptHash, new object[] { operation, args });
+        }
+
+        public InvokeResult InvokeScript(byte[] scriptHash, object[] args)
+        {
+            var script = GenerateScript(scriptHash, args);
+
+            return InvokeScript(script);
         }
 
         public static void EmitObject(ScriptBuilder sb, object item)
@@ -352,9 +367,10 @@ namespace Neo.Lux.Core
             }
         }
 
-        private void GenerateInputsOutputs(KeyPair key, string symbol, IEnumerable<TransactionOutput> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs)
-        {
-           
+        private Dictionary<string, Transaction> lastTransactions = new Dictionary<string, Transaction>();
+
+        private void GenerateInputsOutputs(KeyPair key, string symbol, IEnumerable<TransactionOutput> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs, decimal system_fee = 0)
+        {           
             var unspent = GetUnspent(key.address);
             // filter any asset lists with zero unspent inputs
             unspent = unspent.Where(pair => pair.Value.Count > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -395,24 +411,54 @@ namespace Neo.Lux.Core
                 }
             }
 
+            var targetAssetID = LuxUtils.ReverseHex(assetID).HexToBytes();
+            var keyScriptHash = new UInt160(key.signatureHash.ToArray());
+
             var sources = unspent[symbol];
             decimal selected = 0;
+
+            if (lastTransactions.ContainsKey(key.address))
+            {
+                var lastTx = lastTransactions[key.address];
+
+                uint index = 0;
+                foreach (var output in lastTx.outputs)
+                {
+                    if (output.assetID.SequenceEqual(targetAssetID) && output.scriptHash.Equals(keyScriptHash))
+                    {
+                        selected += output.value;
+
+                        var input = new Transaction.Input()
+                        {
+                            prevHash = lastTx.Hash,
+                            prevIndex = index,
+                        };
+
+                        inputs.Add(input);
+
+                        break;
+                    }
+
+                    index++;
+                }
+            }
+
             foreach (var src in sources)
             {
+                if (selected >= cost && inputs.Count > 0)
+                {
+                    break;
+                }
+
                 selected += src.value;
 
                 var input = new Transaction.Input()
                 {
-                    prevHash = LuxUtils.ReverseHex(src.txid).HexToBytes(),
+                    prevHash = new UInt256(LuxUtils.ReverseHex(src.txid).HexToBytes()),
                     prevIndex = src.index,
                 };
 
                 inputs.Add(input);
-
-                if (selected >= cost)
-                {
-                    break;
-                }
             }
 
             if (selected < cost)
@@ -426,8 +472,8 @@ namespace Neo.Lux.Core
                 {
                     var output = new Transaction.Output()
                     {
-                        assetID = LuxUtils.ReverseHex(assetID).HexToBytes(),
-                        scriptHash = LuxUtils.ReverseHex(GetStringFromScriptHash(target.addressHash)).HexToBytes(),
+                        assetID = targetAssetID,
+                        scriptHash = new UInt160(LuxUtils.ReverseHex(GetStringFromScriptHash(target.addressHash)).HexToBytes()),
                         value = target.amount
                     };
                     outputs.Add(output);
@@ -440,27 +486,33 @@ namespace Neo.Lux.Core
 
                 var change = new Transaction.Output()
                 {
-                    assetID = LuxUtils.ReverseHex(assetID).HexToBytes(),
-                    scriptHash = key.signatureHash.ToArray(),
+                    assetID = targetAssetID,
+                    scriptHash = keyScriptHash,
                     value = left
                 };
                 outputs.Add(change);
             }
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
+        public InvokeResult CallContract(KeyPair key, byte[] scriptHash, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
         {
             var bytes = GenerateScript(scriptHash, args);
             return CallContract(key, scriptHash, bytes, attachSymbol, attachTargets);
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
+        public InvokeResult CallContract(KeyPair key, byte[] scriptHash, string operation, object[] args, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
         {
             return CallContract(key, scriptHash, new object[] { operation, args }, attachSymbol, attachTargets);
         }
 
-        public Transaction CallContract(KeyPair key, byte[] scriptHash, byte[] bytes, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
+        public InvokeResult CallContract(KeyPair key, byte[] scriptHash, byte[] bytes, string attachSymbol = null, IEnumerable<TransactionOutput> attachTargets = null)
         {
+            var result = InvokeScript(bytes);
+            if (result == null)
+            {
+                return null;
+            }
+
             /*var invoke = TestInvokeScript(net, bytes);
             if (invoke.state == null)
             {
@@ -489,7 +541,7 @@ namespace Neo.Lux.Core
                 throw new NeoException($"Not enough inputs for transaction");
             }
 
-            Transaction tx = new Transaction()
+            result.transaction = new Transaction()
             {
                 type = TransactionType.InvocationTransaction,
                 version = 0,
@@ -499,16 +551,25 @@ namespace Neo.Lux.Core
                 outputs = outputs.ToArray()
             };
 
-            tx.Sign(key);
+            result.transaction.Sign(key);
 
-            var rawTx = tx.Serialize(true);
-            var hexTx = rawTx.ByteToHex();
+            if (SendTransaction(key, result.transaction))
+            {
+                return result;
+            }
 
-            var ok = SendRawTransaction(hexTx);
-            return ok ? tx : null;
+            return null;
         }
 
         public abstract bool SendRawTransaction(string hexTx);
+
+        public bool SendTransaction(KeyPair keys, Transaction tx)
+        {
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
+
+            return SendRawTransaction(hexTx);
+        }
 
         public abstract byte[] GetStorage(string scriptHash, byte[] key);
 
@@ -848,7 +909,7 @@ namespace Neo.Lux.Core
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            GenerateInputsOutputs(keys, "GAS", null, out inputs, out outputs);
+            GenerateInputsOutputs(keys, "GAS", null, out inputs, out outputs, fee);
 
             Transaction tx = new Transaction()
             {
@@ -869,52 +930,47 @@ namespace Neo.Lux.Core
             return ok ? tx : null;
         }
 
-        public void WaitForTransaction(Transaction tx)
+        public void WaitForTransaction(KeyPair keys, Transaction tx)
         {
-            WaitForTransaction(tx.Hash);
-        }
-
-        public void WaitForTransaction(string hash)
-        {
-            WaitForTransaction(new UInt256(hash.HexToBytes()));
-        }
-
-        public void WaitForTransaction(UInt256 hash)
-        {
-            if (GetTransaction(hash) != null)
+            if (tx == null)
             {
-                return;
+                throw new ArgumentNullException();
             }
 
-            var startTime = DateTime.UtcNow;
+            uint newBlock;
 
-            uint oldBlock = 0;
-            uint curBlock;
             do
             {
-                curBlock = GetBlockHeight();
+                Thread.Sleep(5000);
+                newBlock = GetBlockHeight();
+            } while (newBlock == oldBlock);
 
-                if (curBlock != oldBlock || oldBlock == 0)
+            oldBlock++;
+            while (oldBlock < newBlock)
+            {
+                var other = GetBlock(oldBlock);
+
+                if (other != null)
                 {
-                    oldBlock = curBlock;
-
-                    var block = GetBlock(curBlock);
-                    if (block == null)
+                    foreach (var entry in other.transactions)
                     {
-                        throw new Exception("Invalid block");
-                    }
-
-                    foreach (var tx in block.transactions)
-                    {
-                        if (tx.Hash == hash)
+                        if (entry.Hash == tx.Hash)
                         {
-                            return;
+                            oldBlock = newBlock;
+                            break;
                         }
                     }
+
+                    oldBlock++;
+                }
+                else
+                {
+                    Thread.Sleep(5000);
                 }
 
-                Thread.Sleep(15 * 1000);
-            } while (true);
+            }
+
+            lastTransactions[keys.address] = tx;
         }
 
 
