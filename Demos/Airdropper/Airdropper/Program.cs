@@ -9,6 +9,24 @@ using Neo.Lux.Utils;
 
 namespace Neo.Lux.Airdropper
 {
+    class CustomRPCNode: NeoDB
+    {
+        private int n = 0;
+
+        public CustomRPCNode() : base("http://api.wallet.cityofzion.io")
+        {
+            this.rpcEndpoint = null;
+        }
+
+        protected override string GetRPCEndpoint()
+        {
+            n++;
+            var result =  "https://seed"+n+".redpulse.com:10331";
+            if (n > 4) n = 0;
+            return result;
+        }
+    }
+
     class AirDropper
     {
         static void ColorPrint(ConsoleColor color, string text) {
@@ -18,9 +36,13 @@ namespace Neo.Lux.Airdropper
             Console.ForegroundColor = ctemp;
         }
 
+        const string airdropResultFileName = "airdrop_result.txt";
+
         static void Main()
         {
-            var api = NeoDB.ForMainNet();
+            //var api = NeoDB.ForMainNet();            
+            //var api = new LocalRPCNode(10332, "http://neoscan.io");
+            var api = new CustomRPCNode();
 
             api.SetLogger(x =>
             {
@@ -101,6 +123,19 @@ namespace Neo.Lux.Airdropper
                 lines = new List<string>() { fileName };
             }
 
+            if (File.Exists(airdropResultFileName))
+            {
+                var finishedAddresses = new HashSet<string>(File.ReadAllLines(airdropResultFileName));
+
+                var previousTotal = lines.Count;
+
+                lines = lines.Where(x => !finishedAddresses.Contains(x)).ToList();
+
+                var skippedTotal = lines.Count - previousTotal;
+
+                Console.WriteLine($"Skipping {token.Name} airdrop...");
+
+            }
 
             int skip = 0;
             int done = 0;
@@ -118,8 +153,6 @@ namespace Neo.Lux.Airdropper
                 return;
             }
 
-            var oldBlock = api.GetBlockHeight();
-
             foreach (var temp in lines)
             {
                 var address = temp.Trim();
@@ -136,7 +169,7 @@ namespace Neo.Lux.Airdropper
                 Console.WriteLine($"Found {address}: {balance} {token.Symbol}");
 
                 Console.WriteLine($"Sending {token.Symbol} to  {address}");
-                Transaction tx;
+                Transaction tx = null;
 
                 int failCount = 0;
                 int failLimit = 20;
@@ -146,11 +179,12 @@ namespace Neo.Lux.Airdropper
                     int tryLimit = 3;
                     do
                     {
-                        tx = token.Transfer(keys, address, amount);
+                        var result = token.Transfer(keys, address, amount);
                         Thread.Sleep(1000);
 
-                        if (tx != null)
+                        if (result != null)
                         {
+                            tx = result.transaction;
                             break;
                         }
 
@@ -182,43 +216,11 @@ namespace Neo.Lux.Airdropper
 
                 Console.WriteLine("Unconfirmed transaction: " + tx.Hash);
 
-                uint newBlock;
-
-                do
-                {
-                    Thread.Sleep(5000);
-                    newBlock = api.GetBlockHeight();
-                } while (newBlock == oldBlock);
-
-                oldBlock++;
-                while (oldBlock < newBlock)
-                {
-                    var other = api.GetBlock(oldBlock);
-
-                    if (other != null)
-                    {
-                        foreach (var entry in other.transactions)
-                        {
-                            if (entry.Hash == tx.Hash)
-                            {
-                                oldBlock = newBlock;
-                                break;
-                            }
-                        }
-
-                        oldBlock++;
-                    }
-                    else
-                    {
-                        Thread.Sleep(5000);
-                    }
-
-                }
-
+                api.WaitForTransaction(keys, tx);
 
                 ColorPrint(ConsoleColor.Green, "Confirmed transaction: " + tx.Hash);
- 
-                File.AppendAllText("airdrop_result.txt", $"{address},{tx.Hash}\n");
+                
+                File.AppendAllText(airdropResultFileName, $"{address},{tx.Hash}\n");
 
                 done++;
             }
