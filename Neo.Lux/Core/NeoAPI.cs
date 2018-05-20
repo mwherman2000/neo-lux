@@ -52,11 +52,6 @@ namespace Neo.Lux.Core
 
         private uint oldBlock;
 
-        public NeoAPI()
-        {
-            oldBlock = this.GetBlockHeight();
-        }
-
         public void SetLogger(Action<string> logger = null)
         {
             this._logger = logger;
@@ -161,6 +156,7 @@ namespace Neo.Lux.Core
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6", "BridgeProtocol", 8);
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd", "Switcheo", 8);
                 AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917", "Orbis", 8);
+                AddToken("SOUL", "4b4f63919b9ecfd2483f0c72ff46ed31b5bbb7a4", "Phantasma", 8);                
             }
 
             return _tokenScripts;
@@ -565,6 +561,11 @@ namespace Neo.Lux.Core
 
         public bool SendTransaction(KeyPair keys, Transaction tx)
         {
+            if (oldBlock == 0)
+            {
+                oldBlock = this.GetBlockHeight();
+            }
+
             var rawTx = tx.Serialize(true);
             var hexTx = rawTx.ByteToHex();
 
