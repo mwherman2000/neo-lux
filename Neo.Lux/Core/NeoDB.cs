@@ -33,7 +33,7 @@ namespace Neo.Lux.Core
                     var invoke = new InvokeResult();
 
                     var stack = root["stack"];
-                    invoke.value = ParseStack(stack);
+                    invoke.stack = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
                     invoke.state = root.GetString("state");

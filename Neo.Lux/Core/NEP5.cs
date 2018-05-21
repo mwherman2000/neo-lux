@@ -7,7 +7,7 @@ namespace Neo.Lux.Core
 {
     public class NEP5
     {
-        private readonly byte[] contractHash;
+        public readonly byte[] ContractHash;
         private readonly NeoAPI api;
 
         public NEP5(NeoAPI api, string contractHash) : this(api, NeoAPI.GetScriptHashFromString(contractHash))
@@ -23,7 +23,7 @@ namespace Neo.Lux.Core
         public NEP5(NeoAPI api, byte[] contractHash)
         {
             this.api = api;
-            this.contractHash = contractHash;
+            this.ContractHash = contractHash;
         }
 
         public NEP5(NeoAPI api, string contractHash, string name, BigInteger decimals)
@@ -43,8 +43,8 @@ namespace Neo.Lux.Core
                 {
                     if (_name == null)
                     {
-                        response = api.InvokeScript(contractHash, "name", new object[] { "" });
-                        _name = System.Text.Encoding.ASCII.GetString((byte[])response.value[0]);
+                        response = api.InvokeScript(ContractHash, "name", new object[] { "" });
+                        _name = System.Text.Encoding.ASCII.GetString((byte[])response.stack[0]);
                     }
 
                     return _name;
@@ -67,8 +67,8 @@ namespace Neo.Lux.Core
                 {
                     if (_symbol == null)
                     {
-                        response = api.InvokeScript(contractHash, "symbol", new object[] { "" });
-                        _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.value[0]);
+                        response = api.InvokeScript(ContractHash, "symbol", new object[] { "" });
+                        _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.stack[0]);
                     }
 
                     return _symbol;
@@ -91,8 +91,8 @@ namespace Neo.Lux.Core
                 {
                     if (_decimals < 0)
                     {
-                        response = api.InvokeScript(contractHash, "decimals", new object[] { "" });
-                        _decimals = (BigInteger)response.value[0];
+                        response = api.InvokeScript(ContractHash, "decimals", new object[] { "" });
+                        _decimals = (BigInteger)response.stack[0];
                     }
 
                     return _decimals;
@@ -116,8 +116,8 @@ namespace Neo.Lux.Core
                 {
                     if (_totalSupply < 0)
                     {
-                        response = api.InvokeScript(contractHash, "totalSupply", new object[] { "" });
-                        _totalSupply = new BigInteger((byte[])response.value[0]);
+                        response = api.InvokeScript(ContractHash, "totalSupply", new object[] { "" });
+                        _totalSupply = new BigInteger((byte[])response.stack[0]);
 
                         var decs = Decimals;
                         while (decs > 0)
@@ -176,8 +176,8 @@ namespace Neo.Lux.Core
             InvokeResult response = new InvokeResult();
             try
             {
-                response = api.InvokeScript(contractHash, "balanceOf", new object[] { addressHash });
-                var balance = new BigInteger((byte[])response.value[0]);
+                response = api.InvokeScript(ContractHash, "balanceOf", new object[] { addressHash });
+                var balance = new BigInteger((byte[])response.stack[0]);
                 return ConvertToDecimal(balance);
             }
             catch
@@ -197,7 +197,7 @@ namespace Neo.Lux.Core
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
-            var response = api.CallContract(from_key, contractHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
+            var response = api.CallContract(from_key, ContractHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
             return response;
         }
 
@@ -211,11 +211,11 @@ namespace Neo.Lux.Core
 
         public decimal Allowance(byte[] from_address_hash, byte[] to_address_hash)
         {
-            var response = api.InvokeScript(contractHash, "allowance", new object[] { from_address_hash, to_address_hash });
+            var response = api.InvokeScript(ContractHash, "allowance", new object[] { from_address_hash, to_address_hash });
 
             try
             {
-                return ConvertToDecimal((BigInteger)response.value[0]);
+                return ConvertToDecimal((BigInteger)response.stack[0]);
             }
             catch (Exception e)
             {
@@ -235,7 +235,7 @@ namespace Neo.Lux.Core
 
         public InvokeResult Deploy(KeyPair owner_key)
         {
-            var response = api.CallContract(owner_key, contractHash, "deploy", new object[] { });
+            var response = api.CallContract(owner_key, ContractHash, "deploy", new object[] { });
             return response;
         }
 

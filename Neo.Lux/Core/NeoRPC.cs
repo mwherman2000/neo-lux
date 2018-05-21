@@ -114,7 +114,7 @@ namespace Neo.Lux.Core
                 if (root != null)
                 {
                     var stack = root["stack"];
-                    invoke.value = ParseStack(stack);
+                    invoke.stack = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
                     invoke.state = root.GetString("state");
