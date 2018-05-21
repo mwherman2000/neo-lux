@@ -36,7 +36,7 @@ namespace Neo.Lux.Airdropper
             Console.ForegroundColor = ctemp;
         }
 
-        const string airdropResultFileName = "airdrop_result.txt";
+        const string result_fileName = "airdrop_result.txt";
 
         static void Main()
         {
@@ -69,9 +69,9 @@ namespace Neo.Lux.Airdropper
                 lines = new List<string>() { fileName };
             }
 
-            if (File.Exists(airdropResultFileName))
+            if (File.Exists(result_fileName))
             {
-                var finishedLines = File.ReadAllLines(airdropResultFileName);
+                var finishedLines = File.ReadAllLines(result_fileName);
                 var finishedAddresses = new HashSet<string>();
                 foreach (var entry in finishedLines)
                 {
@@ -226,7 +226,7 @@ namespace Neo.Lux.Airdropper
 
                 ColorPrint(ConsoleColor.Green, "Confirmed transaction: " + tx.Hash);
                 
-                File.AppendAllText(airdropResultFileName, $"{address},{tx.Hash}\n");
+                File.AppendAllText(result_fileName, $"{address},{tx.Hash}\n");
 
                 done++;
             }
