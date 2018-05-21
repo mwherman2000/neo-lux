@@ -1,59 +1,46 @@
-﻿//#define MANUAL
-//#define FILTER
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Neo.Lux.Utils;
-using Neo.Lux.Core;
 using Neo.Lux.Cryptography;
+using Neo.Lux.Core;
+using Neo.Lux.Utils;
 
-namespace Neo.Lux.WhiteList
+namespace Neo.Lux.Airdropper
 {
-    class WhitelistActivator
+    class CustomRPCNode : NeoDB
     {
+        private int n = 0;
+
+        public CustomRPCNode() : base("http://api.wallet.cityofzion.io")
+        {
+            this.rpcEndpoint = null;
+        }
+
+        protected override string GetRPCEndpoint()
+        {
+            n++;
+            var result = "https://seed" + n + ".redpulse.com:10331";
+            if (n > 4) n = 0;
+            return result;
+        }
+    }
+
+    class AirDropper
+    {
+        static void ColorPrint(ConsoleColor color, string text)
+        {
+            var ctemp = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.WriteLine(text);
+            Console.ForegroundColor = ctemp;
+        }
+
         static void Main()
         {
-            var api = NeoDB.ForMainNet();
-
-            string privateKey;
-            byte[] scriptHash;
-
-            do
-            {
-                Console.Write("Enter WIF private key: ");
-                privateKey = Console.ReadLine();
-
-                if (privateKey.Length == 52)
-                {
-                    break;
-                }
-            } while (true);
-
-            do
-            {
-                Console.Write("Enter contract script hash: ");
-                var temp = Console.ReadLine();
-
-                if (temp.StartsWith("0x"))
-                {
-                    temp = temp.Substring(2);
-                }
-
-                if (temp.Length == 40)
-                {
-                    scriptHash = NeoAPI.GetScriptHashFromString(temp);
-                    break;
-                }
-            } while (true);
-
-            var keys = KeyPair.FromWIF(privateKey);
-
             string fileName;
 
-#if !MANUAL
             do
             {
                 Console.Write("Enter whitelist file name or NEO address: ");
@@ -81,87 +68,183 @@ namespace Neo.Lux.WhiteList
                 lines = new List<string>() { fileName };
             }
 
-            
-#endif
+            var ext = Path.GetExtension(fileName);
+            var result_filename = fileName.Replace(ext, "_result" + ext);
 
-#if FILTER
-            var filtered = new HashSet<string>();
-#endif
-
-            int skip = 0;
-            int add = 0;
-            int errors = 0;
-
-            var removed = new List<string>();
-
-#if MANUAL
-            while (true)
-#else
-            foreach (var temp in lines)
-#endif
+            if (File.Exists(result_filename))
             {
-                
-
-#if MANUAL
-                Console.Write("Enter address: ");
-                var line = Console.ReadLine();
-#else
-                var line = temp.Trim();
-#endif
-
-                if (line.Length != 34 || !line.StartsWith("A"))
+                var finishedLines = File.ReadAllLines(result_filename);
+                var finishedAddresses = new HashSet<string>();
+                foreach (var entry in finishedLines)
                 {
-                    skip++;
-                    removed.Add(temp);
-                    //Console.WriteLine("Invalid address");
+                    var temp = entry.Split(',');
+                    for (int i=1; i<temp.Length; i++)
+                    {
+                        finishedAddresses.Add(temp[i]);
+                    }
+                }
+
+                var previousTotal = lines.Count;
+
+                lines = lines.Where(x => !finishedAddresses.Contains(x)).ToList();
+
+                var skippedTotal = previousTotal - lines.Count;
+
+                Console.WriteLine($"Skipping {skippedTotal} addresses...");
+
+            }
+
+            int done = 0;
+
+            //var api = NeoDB.ForMainNet();            
+            var api = new LocalRPCNode(10332, "http://neoscan.io");
+            //var api = new CustomRPCNode();
+
+            api.SetLogger(x =>
+            {
+                ColorPrint(ConsoleColor.DarkGray, x);
+            });
+
+            string privateKey;
+            byte[] scriptHash = null;
+
+            do
+            {
+                Console.Write("Enter WIF private key: ");
+                privateKey = Console.ReadLine();
+
+                if (privateKey.Length == 52)
+                {
+                    break;
+                }
+
+            } while (true);
+
+            var keys = KeyPair.FromWIF(privateKey);
+            Console.WriteLine("Public address: " + keys.address);
+
+            do
+            {
+                Console.Write("Enter contract script hash or token symbol: ");
+                var temp = Console.ReadLine();
+
+                scriptHash = NeoAPI.GetScriptHashFromSymbol(temp);
+
+                if (scriptHash == null && temp.Length == 40)
+                {
+                    scriptHash = NeoAPI.GetScriptHashFromString(temp);
+                }
+
+            } while (scriptHash == null);
+
+
+            var token = new NEP5(api, scriptHash);
+
+            var dtx = token.Deploy(keys);
+            Console.WriteLine(dtx.transaction.Hash);
+
+            Console.WriteLine($"Starting whitelisting of {token.Name} addresses...");
+
+            var batch = new List<string>();
+
+            foreach (var temp in lines)
+            {
+                var address = temp.Trim();
+                if (!address.IsValidAddress())
+                {
+                    ColorPrint(ConsoleColor.Yellow, "Invalid address: " + address);
                     continue;
                 }
 
-                try
+                batch.Add(address);
+
+                if (batch.Count < 5)
                 {
-                    var hash = line.GetScriptHashFromAddress();
+                    continue;
+                }
 
-                    Console.WriteLine(line+ "," + hash.ByteToHex());
+                Console.WriteLine($"New address batch...");
 
-                    for (int i=1; i<=100; i++)
+                var scripts = new List<object>();
+
+                var batchContent = "";
+
+                foreach (var entry in batch)
+                {
+                    Console.WriteLine($"\t{entry}");
+
+                    if (batchContent.Length > 0)
                     {
-                        var p = api.TestInvokeScript(scriptHash, new object[] { "checkWhitelist", new object[] { hash } });
-                        var state = System.Text.Encoding.UTF8.GetString((byte[])p.result[0]);
-                        Console.WriteLine(state=="on"?"Done": "Retrying...");
+                        batchContent += ",";
+                    }
 
-                        if (state == "on")
+                    batchContent += entry;
+
+                    var hash = entry.GetScriptHashFromAddress();
+                    scripts.Add(hash);
+                }
+
+                
+                Console.WriteLine($"Sending batch to contract...");
+                Transaction tx = null;
+
+                int failCount = 0;
+                int failLimit = 20;
+                do
+                {
+                    int tryCount = 0;
+                    int tryLimit = 3;
+                    do
+                    {
+                        var result = api.CallContract(keys, token.ContractHash, "whitelistAdd", scripts.ToArray());
+                        Thread.Sleep(1000);
+
+                        if (result != null)
                         {
-                            removed.Add(temp);
+                            tx = result.transaction;
                             break;
                         }
 
-#if FILTER
-                        filtered.Add(line);
+                        Console.WriteLine("Tx failed, retrying...");
+
+                        tryCount++;
+                    } while (tryCount < tryLimit);
+
+
+                    if (tx != null)
+                    {
                         break;
-#else
-                        api.CallContract(keys, scriptHash, "enableWhitelist", new object[] { hash });
-                        Console.WriteLine("Waiting for next block... 15seconds");
-                        Thread.Sleep(15000);
-#endif
                     }
-                } catch
+                    else
+                    {
+                        Console.WriteLine("Changing RPC server...");
+                        Thread.Sleep(2000);
+                        api.rpcEndpoint = null;
+                        failCount++;
+                    }
+                } while (failCount < failLimit);
+
+                if (failCount >= failLimit || tx == null)
                 {
-                    errors++;
+                    ColorPrint(ConsoleColor.Red, "Try limit reached, internal problem maybe?");
+                    break;
                 }
 
-                add++;
+                Console.WriteLine("Unconfirmed transaction: " + tx.Hash);
+
+                api.WaitForTransaction(keys, tx);
+
+                ColorPrint(ConsoleColor.Green, "Confirmed transaction: " + tx.Hash);
+
+                File.AppendAllText(result_filename, $"{tx.Hash},{batchContent}\n");
+
+                done += batch.Count;
+                batch.Clear();
             }
 
-#if FILTER
+            Console.WriteLine($"Activated {done} addresses.");
 
-            File.WriteAllLines("filtered.csv", filtered.ToArray());
-            Console.WriteLine($"{filtered.Count} addresses still to need to be added the whitelist.");
-#else
-            Console.WriteLine($"Skipped {skip} invalid addresses.");
-            Console.WriteLine($"Failed {errors} addresses due to network errors.");
-            Console.WriteLine($"Finished adding {add} addresses to the whitelist.");
-#endif
-
+            Console.WriteLine("Finished.");
             Console.ReadLine();
         }
     }
