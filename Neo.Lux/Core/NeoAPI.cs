@@ -27,7 +27,7 @@ namespace Neo.Lux.Core
     {
         public string state;
         public decimal gasSpent;
-        public object[] value;
+        public object[] stack;
         public Transaction transaction;
     }
 
@@ -156,7 +156,7 @@ namespace Neo.Lux.Core
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6", "BridgeProtocol", 8);
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd", "Switcheo", 8);
                 AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917", "Orbis", 8);
-                AddToken("SOUL", "4b4f63919b9ecfd2483f0c72ff46ed31b5bbb7a4", "Phantasma", 8);                
+                AddToken("SOUL", "4b4f63919b9ecfd2483f0c72ff46ed31b5bbb7a4", "Phantasma", 8);
             }
 
             return _tokenScripts;
@@ -946,7 +946,6 @@ namespace Neo.Lux.Core
                 newBlock = GetBlockHeight();
             } while (newBlock == oldBlock);
 
-            oldBlock++;
             while (oldBlock < newBlock)
             {
                 var other = GetBlock(oldBlock);
