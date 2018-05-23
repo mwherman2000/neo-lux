@@ -114,6 +114,52 @@ namespace Neo.Lux.Core
         }
     }
 
+    public class ContractRegistration
+    {
+        public byte[] script;
+        public byte[] parameterList;
+        public byte returnType;
+        public bool needStorage;
+        public string name;
+
+        public string version;
+        public string author;
+        public string email;
+        public string description;
+
+        public void Serialize(BinaryWriter writer, int version)
+        {
+            writer.WriteVarBytes(this.script);
+            writer.WriteVarBytes(this.parameterList);
+            writer.Write((byte)this.returnType);
+            if (version >= 1)
+            {
+                writer.Write((byte)(needStorage?1:0));
+            }
+
+            writer.WriteVarString(this.name);
+            writer.WriteVarString(this.version);
+            writer.WriteVarString(this.author);
+            writer.WriteVarString(this.email);
+            writer.WriteVarString(this.description);
+        }
+
+        public static ContractRegistration Unserialize(BinaryReader reader, int version)
+        {
+            var reg = new ContractRegistration();
+            reg.script = reader.ReadVarBytes();
+            reg.parameterList = reader.ReadVarBytes();
+            reg.returnType = reader.ReadByte();
+            reg.needStorage = (version >= 1) ? reader.ReadBoolean(): false;
+            reg.name = reader.ReadVarString();
+            var CodeVersion = reader.ReadVarString();
+            var Author = reader.ReadVarString();
+            var Email = reader.ReadVarString();
+            var Description = reader.ReadVarString();
+            return reg;
+        }
+    }
+
     public class AssetRegistration
     {
         public AssetType type;
@@ -206,7 +252,9 @@ namespace Neo.Lux.Core
 
         public Input[] references;
         public TransactionAttribute[] attributes;
-        public AssetRegistration registration;
+
+        public AssetRegistration assetRegistration;
+        public ContractRegistration contractRegistration;
 
         public ECPoint enrollmentPublicKey;
 
@@ -288,7 +336,13 @@ namespace Neo.Lux.Core
 
                         case TransactionType.RegisterTransaction:
                             {
-                                this.registration.Serialize(writer);
+                                this.assetRegistration.Serialize(writer);
+                                break;
+                            }
+
+                        case TransactionType.PublishTransaction:
+                            {
+                                this.contractRegistration.Serialize(writer, this.version);
                                 break;
                             }
 
@@ -422,19 +476,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.PublishTransaction:
                     {
-                        var Script = reader.ReadVarBytes();
-                        var ParameterList = reader.ReadVarBytes();
-                        var ReturnType = reader.ReadByte();
-                        bool NeedStorage;
-                        if (tx.version >= 1)
-                            NeedStorage = reader.ReadBoolean();
-                        else
-                            NeedStorage = false;
-                        var Name = reader.ReadVarString();
-                        var CodeVersion = reader.ReadVarString();
-                        var Author = reader.ReadVarString();
-                        var Email = reader.ReadVarString();
-                        var Description = reader.ReadVarString();
+                        tx.contractRegistration = ContractRegistration.Unserialize(reader, tx.version);
                         break;
                     }
 
@@ -446,7 +488,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.RegisterTransaction:
                     {
-                        tx.registration = AssetRegistration.Unserialize(reader);
+                        tx.assetRegistration = AssetRegistration.Unserialize(reader);
                         break;
                     }
 
