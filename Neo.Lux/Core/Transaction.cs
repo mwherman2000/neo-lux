@@ -152,10 +152,10 @@ namespace Neo.Lux.Core
             reg.returnType = reader.ReadByte();
             reg.needStorage = (version >= 1) ? reader.ReadBoolean(): false;
             reg.name = reader.ReadVarString();
-            var CodeVersion = reader.ReadVarString();
-            var Author = reader.ReadVarString();
-            var Email = reader.ReadVarString();
-            var Description = reader.ReadVarString();
+            reg.version = reader.ReadVarString();
+            reg.author = reader.ReadVarString();
+            reg.email = reader.ReadVarString();
+            reg.description = reader.ReadVarString();
             return reg;
         }
     }
