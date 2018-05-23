@@ -99,6 +99,53 @@ namespace Neo.Lux.Core
 
             return new TransactionAttribute() { Usage = Usage, Data = Data};
         }
+
+        internal void Serialize(BinaryWriter writer)
+        {
+            writer.Write((byte)Usage);
+            if (Usage == TransactionAttributeUsage.DescriptionUrl)
+                writer.Write((byte)Data.Length);
+            else if (Usage == TransactionAttributeUsage.Description || Usage >= TransactionAttributeUsage.Remark)
+                writer.WriteVarInt(Data.Length);
+            if (Usage == TransactionAttributeUsage.ECDH02 || Usage == TransactionAttributeUsage.ECDH03)
+                writer.Write(Data, 1, 32);
+            else
+                writer.Write(Data);
+        }
+    }
+
+    public class AssetRegistration
+    {
+        public AssetType type;
+        public String name;
+        public decimal amount;
+        public byte precision;
+        public ECPoint owner;
+        public UInt160 admin;
+
+        internal void Serialize(BinaryWriter writer)
+        {
+            writer.Write((byte)this.type);
+            writer.WriteVarString(this.name);
+            writer.WriteFixed(this.amount);
+            writer.Write((byte)this.precision);
+            writer.Write(this.owner.EncodePoint(true));
+            writer.Write(this.admin.ToArray());
+        }
+
+        public static AssetRegistration Unserialize(BinaryReader reader)
+        {
+            var reg = new AssetRegistration();
+            reg.type = (AssetType)reader.ReadByte();
+            reg.name = reader.ReadVarString();
+            reg.amount = reader.ReadFixed();
+            reg.precision = reader.ReadByte();
+            reg.owner = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
+            if (reg.owner.IsInfinity && reg.type != AssetType.GoverningToken && reg.type != AssetType.UtilityToken)
+                throw new FormatException();
+            reg.admin = new UInt160(reader.ReadBytes(20));
+            return reg;
+        }
     }
 
     public struct Witness
@@ -159,6 +206,7 @@ namespace Neo.Lux.Core
 
         public Input[] references;
         public TransactionAttribute[] attributes;
+        public AssetRegistration registration;
 
         #region HELPERS
         protected static void SerializeTransactionInput(BinaryWriter writer, Input input)
@@ -190,6 +238,11 @@ namespace Neo.Lux.Core
         }
         #endregion
 
+        public override string ToString()
+        {
+            return Hash.ToString();
+        }
+
         public byte[] Serialize(bool signed = true)
         {
             using (var stream = new MemoryStream())
@@ -212,10 +265,37 @@ namespace Neo.Lux.Core
                                 }
                                 break;
                             }
+
+                        case TransactionType.ClaimTransaction:
+                            {
+                                writer.WriteVarInt(this.references.Length);
+                                foreach (var entry in this.references)
+                                {
+                                    SerializeTransactionInput(writer, entry);
+                                }
+                                break;
+                            }
+
+                        case TransactionType.RegisterTransaction:
+                            {
+                                this.registration.Serialize(writer);
+                                break;
+                            }
                     }
 
                     // Don't need any attributes
-                    writer.Write((byte)0);
+                    if (this.attributes != null)
+                    {
+                        writer.WriteVarInt(this.attributes.Length);
+                        foreach (var attr in this.attributes)
+                        {
+                            attr.Serialize(writer);
+                        }
+                    }
+                    else
+                    {
+                        writer.Write((byte)0);
+                    }
 
                     writer.WriteVarInt(this.inputs.Length);
                     foreach (var input in this.inputs)
@@ -266,6 +346,7 @@ namespace Neo.Lux.Core
                 if (_hash == null)
                 {
                     var rawTx = this.Serialize(false);
+                    var hex = rawTx.ByteToHex();
                     _hash = new UInt256(CryptoUtils.Hash256(rawTx));
                 }
 
@@ -348,14 +429,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.RegisterTransaction:
                     {
-                        var AssetType = (AssetType)reader.ReadByte();
-                        var Name = reader.ReadVarString();
-                        var Amount = reader.ReadFixed();
-                        var Precision = reader.ReadByte();
-                        var Owner = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
-                        if (Owner.IsInfinity && AssetType != AssetType.GoverningToken && AssetType != AssetType.UtilityToken)
-                            throw new FormatException();
-                        var Admin = reader.ReadBytes(20);
+                        tx.registration = AssetRegistration.Unserialize(reader);
                         break;
                     }
 
