@@ -13,10 +13,15 @@ namespace Neo.Lux.Core
         public byte[] MerkleRoot;
         public UInt256 PreviousHash;
         public DateTime Timestamp;
-        public long Consensus;
+        public long ConsensusData;
         public UInt160 Validator;
         public Transaction[] transactions;
         public Witness witness;
+
+        public override string ToString()
+        {
+            return Hash.ToString();
+        }
 
         public static Block Unserialize(byte[] bytes)
         {
@@ -29,18 +34,34 @@ namespace Neo.Lux.Core
             }
         }
 
+        public byte[] Serialize()
+        {
+            using (var stream = new MemoryStream())
+            {
+                using (var writer = new BinaryWriter(stream))
+                {
+                    writer.Write(Version);
+                    writer.Write(PreviousHash.ToArray());
+                    writer.Write(MerkleRoot);
+                    writer.Write((uint)Timestamp.ToTimestamp());
+                    writer.Write(Height);
+                    writer.Write(ConsensusData);
+                    writer.Write(Validator.ToArray());
+                    return stream.ToArray();
+                }
+            }
+        }
+
         public static Block Unserialize(BinaryReader reader)
         {
             var block = new Block();
-
-            var ofs = reader.BaseStream.Position;
 
             block.Version = reader.ReadUInt32();
             block.PreviousHash = new UInt256(reader.ReadBytes(32));
             block.MerkleRoot = reader.ReadBytes(32);
             block.Timestamp = reader.ReadUInt32().ToDateTime();
             block.Height = reader.ReadUInt32();
-            block.Consensus = reader.ReadInt64();
+            block.ConsensusData = reader.ReadInt64();
 
             var nextConsensus = reader.ReadBytes(20);
             block.Validator = new UInt160(nextConsensus);
@@ -56,15 +77,11 @@ namespace Neo.Lux.Core
             }
 
             var lastPos = reader.BaseStream.Position;
-            var len = lastPos - ofs;
 
-            reader.BaseStream.Seek(ofs, SeekOrigin.Begin);
-            var data = reader.ReadBytes((int)len);
+            var data = block.Serialize();
 
-            var hash = CryptoUtils.Sha256(data);
+            var hash = CryptoUtils.Hash256(data);
             block.Hash = new UInt256(hash);
-
-            reader.BaseStream.Seek(lastPos, SeekOrigin.Begin);
 
             return block;
         }
