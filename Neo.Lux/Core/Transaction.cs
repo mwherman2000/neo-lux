@@ -208,6 +208,10 @@ namespace Neo.Lux.Core
         public TransactionAttribute[] attributes;
         public AssetRegistration registration;
 
+        public ECPoint enrollmentPublicKey;
+
+        public uint nonce;
+
         #region HELPERS
         protected static void SerializeTransactionInput(BinaryWriter writer, Input input)
         {
@@ -266,6 +270,12 @@ namespace Neo.Lux.Core
                                 break;
                             }
 
+                        case TransactionType.MinerTransaction:
+                            {
+                                writer.Write((uint)this.nonce);
+                                break;
+                            }
+
                         case TransactionType.ClaimTransaction:
                             {
                                 writer.WriteVarInt(this.references.Length);
@@ -281,6 +291,13 @@ namespace Neo.Lux.Core
                                 this.registration.Serialize(writer);
                                 break;
                             }
+
+                        case TransactionType.EnrollmentTransaction:
+                            {
+                                writer.Write(this.enrollmentPublicKey.EncodePoint(true));
+                                break;
+                            }
+
                     }
 
                     // Don't need any attributes
@@ -382,7 +399,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.MinerTransaction:
                     {
-                        var Nonce = reader.ReadUInt32();
+                        tx.nonce = reader.ReadUInt32();
                         break;
                     }
 
@@ -423,7 +440,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.EnrollmentTransaction:
                     {
-                        var PublicKey = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
+                        tx.enrollmentPublicKey = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
                         break;
                     }
 
