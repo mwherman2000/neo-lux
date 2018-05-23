@@ -73,7 +73,9 @@ namespace Neo.Lux.Utils
 
         public static byte[] ReadVarBytes(this BinaryReader reader, int max = 0X7fffffc7)
         {
-            return reader.ReadBytes((int)reader.ReadVarInt((ulong)max));
+            var len = (int)reader.ReadVarInt((ulong)max);
+            if (len == 0) return null;
+            return reader.ReadBytes(len);
         }
 
         public static ulong ReadVarInt(this BinaryReader reader, ulong max = ulong.MaxValue)
@@ -99,6 +101,11 @@ namespace Neo.Lux.Utils
 
         public static void WriteVarBytes(this BinaryWriter writer, byte[] value)
         {
+            if (value == null)
+            {
+                writer.WriteVarInt(0);
+                return;
+            }
             writer.WriteVarInt(value.Length);
             writer.Write(value);
         }
@@ -130,7 +137,7 @@ namespace Neo.Lux.Utils
 
         public static void WriteVarString(this BinaryWriter writer, string value)
         {
-            writer.WriteVarBytes(Encoding.UTF8.GetBytes(value));
+            writer.WriteVarBytes(value != null ? Encoding.UTF8.GetBytes(value): null);
         }
 
         public static void WriteFixed(this BinaryWriter writer, decimal value)
