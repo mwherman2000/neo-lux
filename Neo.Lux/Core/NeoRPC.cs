@@ -124,9 +124,9 @@ namespace Neo.Lux.Core
             return invoke;
         }
 
-        public override Transaction GetTransaction(string hash)
+        public override Transaction GetTransaction(UInt256 hash)
         {
-            var response = QueryRPC("getrawtransaction", new object[] { hash });
+            var response = QueryRPC("getrawtransaction", new object[] { hash.ToString() });
             if (response != null && response.HasNode("result"))
             {
                 var result = response.GetString("result");

@@ -588,11 +588,12 @@ namespace Neo.Lux.Core
 
         public abstract byte[] GetStorage(string scriptHash, byte[] key);
 
-        public abstract Transaction GetTransaction(string hash);
+        public abstract Transaction GetTransaction(UInt256 hash);
 
-        public Transaction GetTransaction(UInt256 hash)
+        public Transaction GetTransaction(string hash)
         {
-            return GetTransaction(hash.ToString());
+            var val = new UInt256(LuxUtils.ReverseHex(hash).HexToBytes());
+            return GetTransaction(val);
         }
 
         public Transaction SendAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)

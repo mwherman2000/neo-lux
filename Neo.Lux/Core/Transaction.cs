@@ -7,28 +7,6 @@ using System.Linq;
 
 namespace Neo.Lux.Core
 {
-    public enum ContractPropertyState : byte
-    {
-        NoProperty = 0,
-
-        HasStorage = 1 << 0,
-        HasDynamicInvoke = 1 << 1,
-        Payable = 1 << 2
-    }
-
-    public enum AssetType : byte
-    {
-        CreditFlag = 0x40,
-        DutyFlag = 0x80,
-
-        GoverningToken = 0x00,
-        UtilityToken = 0x01,
-        Currency = 0x08,
-        Share = DutyFlag | 0x10,
-        Invoice = DutyFlag | 0x18,
-        Token = CreditFlag | 0x20,
-    }
-
     public enum TransactionAttributeUsage
     {
         ContractHash = 0x00,
@@ -114,86 +92,6 @@ namespace Neo.Lux.Core
         }
     }
 
-    public class ContractRegistration
-    {
-        public byte[] script;
-        public byte[] parameterList;
-        public byte returnType;
-        public bool needStorage;
-        public string name;
-
-        public string version;
-        public string author;
-        public string email;
-        public string description;
-
-        public void Serialize(BinaryWriter writer, int version)
-        {
-            writer.WriteVarBytes(this.script);
-            writer.WriteVarBytes(this.parameterList);
-            writer.Write((byte)this.returnType);
-            if (version >= 1)
-            {
-                writer.Write((byte)(needStorage?1:0));
-            }
-
-            writer.WriteVarString(this.name);
-            writer.WriteVarString(this.version);
-            writer.WriteVarString(this.author);
-            writer.WriteVarString(this.email);
-            writer.WriteVarString(this.description);
-        }
-
-        public static ContractRegistration Unserialize(BinaryReader reader, int version)
-        {
-            var reg = new ContractRegistration();
-            reg.script = reader.ReadVarBytes();
-            reg.parameterList = reader.ReadVarBytes();
-            reg.returnType = reader.ReadByte();
-            reg.needStorage = (version >= 1) ? reader.ReadBoolean(): false;
-            reg.name = reader.ReadVarString();
-            reg.version = reader.ReadVarString();
-            reg.author = reader.ReadVarString();
-            reg.email = reader.ReadVarString();
-            reg.description = reader.ReadVarString();
-            return reg;
-        }
-    }
-
-    public class AssetRegistration
-    {
-        public AssetType type;
-        public String name;
-        public decimal amount;
-        public byte precision;
-        public ECPoint owner;
-        public UInt160 admin;
-
-        internal void Serialize(BinaryWriter writer)
-        {
-            writer.Write((byte)this.type);
-            writer.WriteVarString(this.name);
-            writer.WriteFixed(this.amount);
-            writer.Write((byte)this.precision);
-            writer.Write(this.owner.EncodePoint(true));
-            writer.Write(this.admin.ToArray());
-        }
-
-        public static AssetRegistration Unserialize(BinaryReader reader)
-        {
-            var reg = new AssetRegistration();
-            reg.type = (AssetType)reader.ReadByte();
-            reg.name = reader.ReadVarString();
-            reg.amount = reader.ReadFixed();
-            reg.precision = reader.ReadByte();
-            reg.owner = ECPoint.DeserializeFrom(reader, ECCurve.Secp256r1);
-            if (reg.owner.IsInfinity && reg.type != AssetType.GoverningToken && reg.type != AssetType.UtilityToken)
-                throw new FormatException();
-            reg.admin = new UInt160(reader.ReadBytes(20));
-            return reg;
-        }
-    }
-
     public struct Witness
     {
         public byte[] invocationScript;
@@ -226,7 +124,16 @@ namespace Neo.Lux.Core
         InvocationTransaction = 0xd1
     }
 
-    public class Transaction
+    public interface IInteropInterface
+    {
+    }
+
+    public interface IScriptContainer : IInteropInterface
+    {
+        byte[] GetMessage();
+    }
+
+    public class Transaction: IScriptContainer
     {
         public struct Input
         {
@@ -254,7 +161,7 @@ namespace Neo.Lux.Core
         public TransactionAttribute[] attributes;
 
         public AssetRegistration assetRegistration;
-        public ContractRegistration contractRegistration;
+        public Contract contractRegistration;
 
         public ECPoint enrollmentPublicKey;
 
@@ -289,6 +196,11 @@ namespace Neo.Lux.Core
             return new Output() { assetID = assetID, value = value, scriptHash = new UInt160(scriptHash)};
         }
         #endregion
+
+        public byte[] GetMessage()
+        {
+            return this.Serialize(false);
+        }
 
         public override string ToString()
         {
@@ -476,7 +388,7 @@ namespace Neo.Lux.Core
 
                 case TransactionType.PublishTransaction:
                     {
-                        tx.contractRegistration = ContractRegistration.Unserialize(reader, tx.version);
+                        tx.contractRegistration = Contract.Unserialize(reader, tx.version);
                         break;
                     }
 

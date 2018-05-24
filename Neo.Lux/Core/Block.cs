@@ -9,7 +9,6 @@ namespace Neo.Lux.Core
     {
         public uint Version;
         public uint Height;
-        public UInt256 Hash;
         public byte[] MerkleRoot;
         public UInt256 PreviousHash;
         public DateTime Timestamp;
@@ -21,6 +20,21 @@ namespace Neo.Lux.Core
         public override string ToString()
         {
             return Hash.ToString();
+        }
+
+        private UInt256 _hash;
+        public UInt256 Hash
+        {
+            get
+            {
+                if (_hash == null)
+                {
+                    var data = this.Serialize();
+                    _hash = new UInt256(CryptoUtils.Hash256(data));
+                }
+
+                return _hash;
+            }
         }
 
         public static Block Unserialize(byte[] bytes)
@@ -41,12 +55,12 @@ namespace Neo.Lux.Core
                 using (var writer = new BinaryWriter(stream))
                 {
                     writer.Write(Version);
-                    writer.Write(PreviousHash.ToArray());
-                    writer.Write(MerkleRoot);
+                    writer.Write(PreviousHash != null ? PreviousHash.ToArray() : new byte[32]);
+                    writer.Write(MerkleRoot != null ? MerkleRoot : new byte[32]);
                     writer.Write((uint)Timestamp.ToTimestamp());
                     writer.Write(Height);
                     writer.Write(ConsensusData);
-                    writer.Write(Validator.ToArray());
+                    writer.Write(Validator!=null ? Validator.ToArray(): new byte[20]);
                     return stream.ToArray();
                 }
             }
@@ -77,11 +91,6 @@ namespace Neo.Lux.Core
             }
 
             var lastPos = reader.BaseStream.Position;
-
-            var data = block.Serialize();
-
-            var hash = CryptoUtils.Hash256(data);
-            block.Hash = new UInt256(hash);
 
             return block;
         }
