@@ -79,6 +79,20 @@ namespace Neo.Lux.Core
             _systemAssets[symbol] = hash;
         }
 
+        public static byte[] GetAssetID(string symbol)
+        {
+            var info = GetAssetsInfo();
+            foreach (var entry in info)
+            {
+                if (entry.Key == symbol)
+                {
+                    return LuxUtils.ReverseHex(entry.Value).HexToBytes();
+                }
+            }
+
+            return null;
+        }
+
         public static IEnumerable<string> AssetSymbols
         {
             get

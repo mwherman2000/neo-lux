@@ -5,12 +5,45 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Numerics;
 
 namespace Neo.Lux.Core
 {
+    public class Asset
+    {
+        public UInt256 hash;
+        public string name;
+    }
+
+    public class Account
+    {
+        public UInt160 hash;
+
+        public Dictionary<byte[], BigInteger> balances = new Dictionary<byte[], BigInteger>(new ByteArrayComparer());
+
+        public void Deposit(byte[] asset, BigInteger amount)
+        {
+            var balance = balances.ContainsKey(asset) ? balances[asset] : 0;
+            balance += amount;
+            balances[asset] = balance;
+        }
+
+        public void Withdraw(byte[] asset, BigInteger amount)
+        {
+            var balance = balances.ContainsKey(asset) ? balances[asset] : 0;
+            balance -= amount;
+            balances[asset] = balance;
+        }
+    }
+
     public class Chain
     {
         protected Dictionary<uint, Block> _blocks = new Dictionary<uint, Block>();
+
+        protected Dictionary<UInt256, Block> _blockMap = new Dictionary<UInt256, Block>();
+        protected Dictionary<UInt256, Transaction> _txMap = new Dictionary<UInt256, Transaction>();
+        protected Dictionary<byte[], Asset> _assetMap = new Dictionary<byte[], Asset>(new ByteArrayComparer());
+        protected Dictionary<UInt160, Account> _accountMap = new Dictionary<UInt160, Account>();
 
         public void SyncWithNode(NeoAPI api)
         {
@@ -21,7 +54,41 @@ namespace Neo.Lux.Core
             for (uint i = min; i<=max; i++)
             {
                 var block = api.GetBlock(i);
-                _blocks[i] = block;
+                AddBlock(block);
+            }
+        }
+
+        protected void AddBlock(Block block)
+        {
+            _blocks[block.Height] = block;
+            _blockMap[block.Hash] = block;
+
+            foreach (var tx in block.transactions)
+            {
+                ExecuteTransaction(tx);
+            }
+
+            foreach (var tx in block.transactions)
+            {
+                _txMap[tx.Hash] = tx;
+            }
+        }
+
+        private void ExecuteTransaction(Transaction tx)
+        {
+            foreach (var input in tx.inputs)
+            {
+                var input_tx = GetTransaction(input.prevHash);
+                var output = input_tx.outputs[input.prevIndex];
+
+                var account = GetAccount(output.scriptHash);
+                account.Withdraw(output.assetID, output.value.ToBigInteger());
+            }
+
+            foreach (var output in tx.outputs)
+            {
+                var account = GetAccount(output.scriptHash);
+                account.Deposit(output.assetID, output.value.ToBigInteger());
             }
         }
 
@@ -30,126 +97,50 @@ namespace Neo.Lux.Core
             return _blocks.ContainsKey(height) ? _blocks[height] : null;
         }
 
-        public static byte[] Compress(byte[] data)
+        public Block GetBlock(UInt256 hash)
         {
-            using (var compressStream = new MemoryStream())
-            using (var compressor = new DeflateStream(compressStream, CompressionMode.Compress))
-            {
-                compressor.Write(data, 0, data.Length);
-                compressor.Close();
-                return compressStream.ToArray();
-            }
+            return _blockMap.ContainsKey(hash) ? _blockMap[hash] : null;
         }
 
-        public static byte[] Decompress(byte[] data)
+        public Account GetAccount(UInt160 hash)
         {
-            var output = new MemoryStream();
-            using (var compressedStream = new MemoryStream(data))
+            if (_accountMap.ContainsKey(hash))
             {
-                using (var zipStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
-                {
-                    var buffer = new byte[4096];
-                    int read;
-                    while ((read = zipStream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        output.Write(buffer, 0, read);
-                    }
-                    output.Position = 0;
-                    return output.ToArray();
-                }
-
+                return _accountMap[hash];
             }
+
+            var account = new Account();
+            account.hash = hash;
+            _accountMap[hash] = account;
+            return account;
         }
 
-        public static void ExportBlocks(int chunk, uint block, List<string> lines)
+        public Asset GetAsset(byte[] id)
         {
-            byte[] txData;
-
-            using (var stream = new MemoryStream())
-            {
-                using (var writer = new BinaryWriter(stream))
-                {
-                    var curBlock = block;
-                    foreach (var line in lines)
-                    {
-                        var bytes = line.HexToBytes();
-                        writer.Write(curBlock);
-                        writer.Write(bytes.Length);
-                        writer.Write(bytes);
-                        curBlock++;
-                    }
-                }
-
-                txData = stream.ToArray();
-            }
-
-            var compressed = Compress(txData);
-
-            using (var stream = new MemoryStream())
-            {
-                using (var writer = new BinaryWriter(stream))
-                {
-
-                    writer.WriteVarInt(lines.Count);
-                    writer.Write(compressed.Length);
-                    writer.Write(compressed);
-                }
-
-                var data = stream.ToArray();
-                var fileName = "chain/chunk" + chunk;
-                File.WriteAllBytes(fileName, data);
-
-                // LoadChunk(fileName);
-            }
-
-            lines.Clear();
+            return _assetMap.ContainsKey(id) ? _assetMap[id] : null;
         }
 
-        public static List<Block> LoadChunk(string fileName)
+        public Transaction GetTransaction(UInt256 hash)
         {
-            var bytes = File.ReadAllBytes(fileName);
-
-            byte[] txdata;
-            int blockCount;
-            using (var stream = new MemoryStream(bytes))
-            {
-                using (var reader = new BinaryReader(stream))
-                {
-                    blockCount = (int)reader.ReadVarInt();
-                    var len = reader.ReadInt32();
-                    var compressed = reader.ReadBytes(len);
-
-                    txdata = Decompress(compressed);
-                }
-            }
-
-            uint currentBlock = 0;
-            var blocks = new List<Block>();
-            using (var stream = new MemoryStream(txdata))
-            {
-                using (var reader = new BinaryReader(stream))
-                {
-                    for (int i = 0; i < blockCount; i++)
-                    {
-                        currentBlock = reader.ReadUInt32();
-                        var len = reader.ReadInt32();
-                        var blockData = reader.ReadBytes(len);
-
-                        var block = Block.Unserialize(blockData);
-                        blocks.Add(block);
-                    }
-                }
-            }
-
-            return blocks;
+            return _txMap.ContainsKey(hash) ? _txMap[hash] : null;
         }
     }
 
     public class VirtualChain : Chain
     {
-        public VirtualChain(NeoAPI api) 
+        public VirtualChain(NeoAPI api, KeyPair owner) 
         {
+            var scripthash = new UInt160(owner.signatureHash.ToArray());
 
+            var txs = new List<Transaction>();
+            foreach (var symbol in NeoAPI.AssetSymbols)
+            {
+                var neo = NeoAPI.GetAssetID(symbol);
+                var tx = new Transaction();
+                tx.outputs = new Transaction.Output[] { new Transaction.Output() { assetID = neo, scriptHash = scripthash, value = 1000000000 } };
+                txs.Add(tx);
+            }
+            GenerateBlock(txs);
         }
 
         public void GenerateBlock(IEnumerable<Transaction> transactions)
@@ -173,7 +164,7 @@ namespace Neo.Lux.Core
                 index++;
             }
 
-            _blocks[block.Height] = block;
+            AddBlock(block);
         }
     }
 }

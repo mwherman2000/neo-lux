@@ -31,6 +31,17 @@ namespace Neo.Lux.Utils
 
     public static class LuxUtils
     {
+        public static BigInteger ToBigInteger(this decimal val, int places = 8)
+        {
+            while (places > 0)
+            {
+                val*= 10;
+                places--;
+            }
+
+            return (long)val;
+        }
+
         public static string ReverseHex(string hex)
         {
 
