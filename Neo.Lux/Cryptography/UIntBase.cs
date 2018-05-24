@@ -50,7 +50,21 @@ namespace Neo.Lux.Cryptography
 
         public override int GetHashCode()
         {
-            return data_bytes.ToInt32(0);
+            unchecked
+            {
+                const int p = 16777619;
+                int hash = (int)2166136261;
+
+                for (int i = 0; i < data_bytes.Length; i++)
+                    hash = (hash ^ data_bytes[i]) * p;
+
+                hash += hash << 13;
+                hash ^= hash >> 7;
+                hash += hash << 3;
+                hash ^= hash >> 17;
+                hash += hash << 5;
+                return hash;
+            }
         }
 
         void ISerializable.Serialize(BinaryWriter writer)
