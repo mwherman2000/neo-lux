@@ -1,4 +1,5 @@
-﻿using Neo.Lux.Utils;
+﻿using Neo.Lux.Cryptography;
+using Neo.Lux.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,11 +12,13 @@ namespace Neo.Lux.Core
     {
         protected Dictionary<uint, Block> _blocks = new Dictionary<uint, Block>();
 
-        public Chain(NeoAPI api)
+        public void SyncWithNode(NeoAPI api)
         {
             var max = api.GetBlockHeight();
 
-            for (uint i=0; i<=max; i++)
+            var min = (uint)_blocks.Count;
+
+            for (uint i = min; i<=max; i++)
             {
                 var block = api.GetBlock(i);
                 _blocks[i] = block;
@@ -144,7 +147,7 @@ namespace Neo.Lux.Core
 
     public class VirtualChain : Chain
     {
-        public VirtualChain(NeoAPI api) : base(api)
+        public VirtualChain(NeoAPI api) 
         {
 
         }
