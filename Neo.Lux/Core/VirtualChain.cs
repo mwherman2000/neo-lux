@@ -12,6 +12,8 @@ namespace Neo.Lux.Core
     {
         public uint Time { get; set; }
 
+        public bool HasDebugger => _debugger != null;
+
         private DebugClient _debugger;
 
         public VirtualChain(NeoAPI api, KeyPair owner)
@@ -76,6 +78,7 @@ namespace Neo.Lux.Core
         protected override bool ValidateWitness(UInt160 a, UInt160 b)
         {
             if (_witnessMap.ContainsKey(a) && _witnessMap[a] == b){
+                Logger("Bypassed check via " + a.ToAddress());
                 return true;
             }
 
