@@ -93,7 +93,8 @@ namespace Neo.Lux.Core
                     if (_decimals < 0)
                     {
                         response = api.InvokeScript(scriptHash, "decimals", new object[] { "" });
-                        _decimals = (BigInteger)response.stack[0];
+                        var bytes = (byte[])response.stack[0];
+                        _decimals = new BigInteger(bytes);
                     }
 
                     return _decimals;
@@ -117,7 +118,7 @@ namespace Neo.Lux.Core
                 {
                     if (_totalSupply < 0)
                     {
-                        response = api.InvokeScript(scriptHash, "totalSupply", new object[] { "" });
+                        response = api.InvokeScript(scriptHash, "totalSupply", new object[] { });
                         _totalSupply = new BigInteger((byte[])response.stack[0]);
 
                         var decs = Decimals;
