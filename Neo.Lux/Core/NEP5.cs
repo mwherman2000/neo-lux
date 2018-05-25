@@ -142,6 +142,11 @@ namespace Neo.Lux.Core
         // FIXME - I'm almost sure that this code won't return non-integer balances correctly...
         private decimal ConvertToDecimal(BigInteger value)
         {
+            if (value == 0)
+            {
+                return 0;
+            }
+
             var decs = this.Decimals;
             while (decs > 0)
             {
@@ -178,7 +183,8 @@ namespace Neo.Lux.Core
             try
             {
                 response = api.InvokeScript(scriptHash, "balanceOf", new object[] { addressHash });
-                var balance = new BigInteger((byte[])response.stack[0]);
+                var bytes = (byte[])response.stack[0];
+                var balance = new BigInteger(bytes);
                 return ConvertToDecimal(balance);
             }
             catch
@@ -203,7 +209,6 @@ namespace Neo.Lux.Core
         }
 
         // optional methods, not all NEP5 support this!
-
         public decimal Allowance(string from_address, string to_address)
         {
             return Allowance(from_address.GetScriptHashFromAddress(), to_address.GetScriptHashFromAddress());
