@@ -374,8 +374,14 @@ namespace Neo.Lux.Core
         private Dictionary<string, Transaction> lastTransactions = new Dictionary<string, Transaction>();
 
         public void GenerateInputsOutputs(KeyPair key, string symbol, IEnumerable<Transaction.Output> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs, decimal system_fee = 0)
+        {
+            var from_script_hash = new UInt160(key.signatureHash.ToArray());
+            GenerateInputsOutputs(from_script_hash, symbol, targets, out inputs, out outputs, system_fee);
+        }
+
+        public void GenerateInputsOutputs(UInt160 from_script_hash, string symbol, IEnumerable<Transaction.Output> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs, decimal system_fee = 0)
         {           
-            var unspent = GetUnspent(key.address);
+            var unspent = GetUnspent(from_script_hash);
             // filter any asset lists with zero unspent inputs
             unspent = unspent.Where(pair => pair.Value.Count > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
 
@@ -394,19 +400,20 @@ namespace Neo.Lux.Core
                 throw new NeoException($"{symbol} is not a valid blockchain asset.");
             }
 
+            var from_address = from_script_hash.ToAddress();
+
             if (!unspent.ContainsKey(symbol))
             {
-                throw new NeoException($"Not enough {symbol} in address {key.address}");
+                throw new NeoException($"Not enough {symbol} in address {from_address}");
             }
 
             decimal cost = 0;
 
-            var fromHash = new UInt160(key.PublicKeyHash.ToArray());
             if (targets != null)
             {
                 foreach (var target in targets)
                 {
-                    if (target.scriptHash.Equals(fromHash))
+                    if (target.scriptHash.Equals(from_script_hash))
                     {
                         throw new NeoException("Target can't be same as input");
                     }
@@ -416,14 +423,14 @@ namespace Neo.Lux.Core
             }
 
             var targetAssetID = LuxUtils.ReverseHex(assetID).HexToBytes();
-            var from_script_hash = new UInt160(key.signatureHash.ToArray());
+            
 
             var sources = unspent[symbol];
             decimal selected = 0;
 
-            if (lastTransactions.ContainsKey(key.address))
+            if (lastTransactions.ContainsKey(from_address))
             {
-                var lastTx = lastTransactions[key.address];
+                var lastTx = lastTransactions[from_address];
 
                 uint index = 0;
                 foreach (var output in lastTx.outputs)
@@ -617,20 +624,20 @@ namespace Neo.Lux.Core
             return ok ? tx : null;
         }
 
-        public Transaction WithdrawAsset(KeyPair fromKey, string toAddress, string symbol, decimal amount)
+        public Transaction WithdrawAsset(KeyPair toKey, string fromAddress, string symbol, decimal amount)
         {
-            var toScriptHash = toAddress.GetScriptHashFromAddress();
-            var target = new Transaction.Output() { scriptHash = new UInt160(toScriptHash), value = amount };
+            var fromScriptHash = new UInt160(fromAddress.GetScriptHashFromAddress());
+            var target = new Transaction.Output() { scriptHash = new UInt160(toKey.address.GetScriptHashFromAddress()), value = amount };
             var targets = new List<Transaction.Output>() { target };
-            return WithdrawAsset(fromKey, symbol, targets);
+            return WithdrawAsset(toKey, fromScriptHash, symbol, targets);
         }
 
-        public Transaction WithdrawAsset(KeyPair toKey, string symbol, IEnumerable<Transaction.Output> targets)
+        public Transaction WithdrawAsset(KeyPair toKey, UInt160 fromScripthash, string symbol, IEnumerable<Transaction.Output> targets)
         {
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
 
-            GenerateInputsOutputs(toKey, symbol, targets, out inputs, out outputs);
+            GenerateInputsOutputs(fromScripthash, symbol, targets, out inputs, out outputs);
 
             Transaction tx = new Transaction()
             {

@@ -374,6 +374,7 @@ namespace Neo.Lux.Core
             Register("Neo.Transaction.GetReferences", Transaction_GetReferences, 0.2m);
             Register("Neo.Transaction.GetOutputs", Transaction_GetOutputs, defaultGasCost);
             Register("Neo.Transaction.GetInputs", Transaction_GetInputs, defaultGasCost);
+            Register("Neo.Transaction.GetHash", engine => { var tx = GetInteropFromStack<Transaction>(engine); if (tx == null) return false; engine.EvaluationStack.Push(tx.Hash.ToArray()); return true; }, defaultGasCost);
 
             Register("Neo.Output.GetScriptHash", engine => { var output = GetInteropFromStack<Transaction.Output>(engine); if (output == null) return false; engine.EvaluationStack.Push(output.scriptHash.ToArray()); return true; }, defaultGasCost);
             Register("Neo.Output.GetValue", engine => { var output = GetInteropFromStack<Transaction.Output>(engine); if (output == null) return false; engine.EvaluationStack.Push(output.value.ToBigInteger()); return true; }, defaultGasCost);
