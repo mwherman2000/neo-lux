@@ -108,7 +108,6 @@ namespace Neo.Lux.Core
             }
         }
 
-        private BigInteger _totalSupply = -1;
         public BigInteger TotalSupply
         {
             get
@@ -116,20 +115,17 @@ namespace Neo.Lux.Core
                 InvokeResult response = null;
                 try
                 {
-                    if (_totalSupply < 0)
-                    {
-                        response = api.InvokeScript(scriptHash, "totalSupply", new object[] { });
-                        _totalSupply = new BigInteger((byte[])response.stack[0]);
+                    response = api.InvokeScript(scriptHash, "totalSupply", new object[] { });
+                    var totalSupply = new BigInteger((byte[])response.stack[0]);
 
-                        var decs = Decimals;
-                        while (decs > 0)
-                        {
-                            _totalSupply /= 10;
-                            decs--;
-                        }
+                    var decs = Decimals;
+                    while (decs > 0)
+                    {
+                        totalSupply /= 10;
+                        decs--;
                     }
 
-                    return _totalSupply;
+                    return totalSupply;
 
                 }
                 catch (Exception e)
