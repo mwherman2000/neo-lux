@@ -2,28 +2,29 @@
 using Neo.Lux.Utils;
 using System.Numerics;
 using System;
+using System.Collections.Generic;
 
 namespace Neo.Lux.Core
 {
     public class NEP5
     {
-        public readonly byte[] ContractHash;
-        private readonly NeoAPI api;
+        public readonly UInt160 scriptHash;
+        public readonly NeoAPI api;
 
         public NEP5(NeoAPI api, string contractHash) : this(api, NeoAPI.GetScriptHashFromString(contractHash))
         {
 
         }
 
-        public NEP5(NeoAPI api, UInt160 contractHash) : this(api, contractHash.ToArray())
+        public NEP5(NeoAPI api, byte[] contractHash) : this(api, new UInt160(contractHash))
         {
 
         }
 
-        public NEP5(NeoAPI api, byte[] contractHash)
+        public NEP5(NeoAPI api, UInt160 contractHash)
         {
             this.api = api;
-            this.ContractHash = contractHash;
+            this.scriptHash = contractHash;
         }
 
         public NEP5(NeoAPI api, string contractHash, string name, BigInteger decimals)
@@ -43,7 +44,7 @@ namespace Neo.Lux.Core
                 {
                     if (_name == null)
                     {
-                        response = api.InvokeScript(ContractHash, "name", new object[] { "" });
+                        response = api.InvokeScript(scriptHash, "name", new object[] { "" });
                         _name = System.Text.Encoding.ASCII.GetString((byte[])response.stack[0]);
                     }
 
@@ -67,7 +68,7 @@ namespace Neo.Lux.Core
                 {
                     if (_symbol == null)
                     {
-                        response = api.InvokeScript(ContractHash, "symbol", new object[] { "" });
+                        response = api.InvokeScript(scriptHash, "symbol", new object[] { "" });
                         _symbol = System.Text.Encoding.ASCII.GetString((byte[])response.stack[0]);
                     }
 
@@ -91,7 +92,7 @@ namespace Neo.Lux.Core
                 {
                     if (_decimals < 0)
                     {
-                        response = api.InvokeScript(ContractHash, "decimals", new object[] { "" });
+                        response = api.InvokeScript(scriptHash, "decimals", new object[] { "" });
                         _decimals = (BigInteger)response.stack[0];
                     }
 
@@ -116,7 +117,7 @@ namespace Neo.Lux.Core
                 {
                     if (_totalSupply < 0)
                     {
-                        response = api.InvokeScript(ContractHash, "totalSupply", new object[] { "" });
+                        response = api.InvokeScript(scriptHash, "totalSupply", new object[] { "" });
                         _totalSupply = new BigInteger((byte[])response.stack[0]);
 
                         var decs = Decimals;
@@ -176,7 +177,7 @@ namespace Neo.Lux.Core
             InvokeResult response = new InvokeResult();
             try
             {
-                response = api.InvokeScript(ContractHash, "balanceOf", new object[] { addressHash });
+                response = api.InvokeScript(scriptHash, "balanceOf", new object[] { addressHash });
                 var balance = new BigInteger((byte[])response.stack[0]);
                 return ConvertToDecimal(balance);
             }
@@ -186,18 +187,18 @@ namespace Neo.Lux.Core
             }
         }
 
-        public InvokeResult Transfer(KeyPair from_key, string to_address, decimal value)
+        public Transaction Transfer(KeyPair from_key, string to_address, decimal value)
         {
             return Transfer(from_key, to_address.GetScriptHashFromAddress(), value);
         }
 
-        public InvokeResult Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
+        public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
             Console.WriteLine("NEP5 token " + Name + " transfer " + value);
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
-            var response = api.CallContract(from_key, ContractHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
+            var response = api.CallContract(from_key, scriptHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
             return response;
         }
 
@@ -211,7 +212,7 @@ namespace Neo.Lux.Core
 
         public decimal Allowance(byte[] from_address_hash, byte[] to_address_hash)
         {
-            var response = api.InvokeScript(ContractHash, "allowance", new object[] { from_address_hash, to_address_hash });
+            var response = api.InvokeScript(scriptHash, "allowance", new object[] { from_address_hash, to_address_hash });
 
             try
             {
@@ -232,12 +233,22 @@ namespace Neo.Lux.Core
         {
             throw new System.NotImplementedException();
         }
+    }
 
-        public InvokeResult Deploy(KeyPair owner_key)
+    public static class TokenSale
+    {
+        public static Transaction Deploy(NEP5 token, KeyPair owner_key)
         {
-            var response = api.CallContract(owner_key, ContractHash, "deploy", new object[] { });
+            var response = token.api.CallContract(owner_key, token.scriptHash, "deploy", new object[] { });
             return response;
         }
 
+        public static Transaction MintTokens(NEP5 token, KeyPair buyer_key, string symbol, decimal amount)
+        {
+            var attachs = new List<Transaction.Output>();
+            attachs.Add(new Transaction.Output() { assetID = NeoAPI.GetAssetID(symbol), scriptHash = token.scriptHash, value = amount });
+            var response = token.api.CallContract(buyer_key, token.scriptHash, "mintTokens", new object[] { }, symbol, attachs);
+            return response;
+        }
     }
 }

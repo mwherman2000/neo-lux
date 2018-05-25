@@ -3,6 +3,7 @@ using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 
 namespace Neo.Lux.Core
@@ -66,9 +67,9 @@ namespace Neo.Lux.Core
         }
 
         // Note: This current implementation requires NeoScan running at port 4000
-        public override Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
+        public override Dictionary<string, List<UnspentEntry>> GetUnspent(UInt160 hash)
         {
-            var url = this.neoscanUrl +"/api/main_net/v1/get_balance/" + address;
+            var url = this.neoscanUrl +"/api/main_net/v1/get_balance/" + hash.ToAddress();
             var json = RequestUtils.GetWebRequest(url);
 
             var root = LunarParser.JSON.JSONReader.ReadFromString(json);
@@ -94,17 +95,25 @@ namespace Neo.Lux.Core
             return unspents;
         }
 
-        public override bool SendRawTransaction(string hexTx)
+        public bool SendRawTransaction(string hexTx)
         {
             var response = QueryRPC("sendrawtransaction", new object[] {hexTx });
             var result = response.GetBool("result");
             return result;
         }
 
+        protected override bool SendTransaction(Transaction tx)
+        {
+            var rawTx = tx.Serialize(true);
+            var hexTx = rawTx.ByteToHex();
+
+            return SendRawTransaction(hexTx);
+        }
+
         public override InvokeResult InvokeScript(byte[] script)
         {
             var invoke = new InvokeResult();
-            invoke.state = null;
+            invoke.state = VM.VMState.NONE;
 
             var response = QueryRPC("invokescript", new object[] { script.ByteToHex()});
 
@@ -117,7 +126,21 @@ namespace Neo.Lux.Core
                     invoke.stack = ParseStack(stack);
 
                     invoke.gasSpent = root.GetDecimal("gas_consumed");
-                    invoke.state = root.GetString("state");
+                    var temp = root.GetString("state");
+
+                    if (temp.Contains("FAULT"))
+                    {
+                        invoke.state = VM.VMState.FAULT;
+                    }
+                    else
+                    if (temp.Contains("HALT"))
+                    {
+                        invoke.state = VM.VMState.HALT;
+                    }
+                    else
+                    {
+                        invoke.state = VM.VMState.NONE;
+                    }
                 }
             }
 
@@ -136,6 +159,57 @@ namespace Neo.Lux.Core
             else
             {
                 return null;
+            }
+        }
+
+        public override uint GetBlockHeight()
+        {
+            var response = QueryRPC("getblockcount", new object[] { });
+            var blockCount = response.GetUInt32("result");
+            return blockCount;
+        }
+
+        public override Block GetBlock(uint height)
+        {
+            var response = QueryRPC("getblock", new object[] { height });
+            if (response == null || !response.HasNode("result"))
+            {
+                return null;
+            }
+
+            var result = response.GetString("result");
+
+            var bytes = result.HexToBytes();
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                using (var reader = new BinaryReader(stream))
+                {
+                    var block = Block.Unserialize(reader);
+                    return block;
+                }
+            }
+        }
+
+        public override Block GetBlock(UInt256 hash)
+        {
+            var response = QueryRPC("getblock", new object[] { hash.ToString() });
+            if (response == null || !response.HasNode("result"))
+            {
+                return null;
+            }
+
+            var result = response.GetString("result");
+
+            var bytes = result.HexToBytes();
+
+            using (var stream = new MemoryStream(bytes))
+            {
+                using (var reader = new BinaryReader(stream))
+                {
+                    var block = Block.Unserialize(reader);
+                    return block;
+                }
             }
         }
 

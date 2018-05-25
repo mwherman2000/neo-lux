@@ -135,13 +135,13 @@ namespace Neo.Lux.Core
 
     public class Transaction: IScriptContainer
     {
-        public struct Input
+        public class Input : IInteropInterface
         {
             public UInt256 prevHash;
             public uint prevIndex;
         }
 
-        public struct Output
+        public class Output : IInteropInterface
         {
             public UInt160 scriptHash;
             public byte[] assetID;

@@ -62,7 +62,7 @@ namespace Neo.Lux.Cryptography
             return new KeyPair(privateKey);
         }
 
-        public static KeyPair Generate()
+        public static KeyPair GenerateAddress()
         {
             var bytes = new byte[32];
             var rnd = new Random();

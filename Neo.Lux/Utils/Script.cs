@@ -1,4 +1,5 @@
 ﻿using Neo.Lux.Core;
+using Neo.Lux.Cryptography;
 using System;
 using System.IO;
 using System.Numerics;
@@ -25,11 +26,9 @@ namespace Neo.Lux.Utils
             return this;
         }
 
-        public ScriptBuilder EmitAppCall(byte[] scriptHash, bool useTailCall = false)
+        public ScriptBuilder EmitAppCall(UInt160 scriptHash, bool useTailCall = false)
         {
-            if (scriptHash.Length != 20)
-                throw new ArgumentException();
-            return Emit(useTailCall ? OpCode.TAILCALL : OpCode.APPCALL, scriptHash);
+            return Emit(useTailCall ? OpCode.TAILCALL : OpCode.APPCALL, scriptHash.ToArray());
         }
 
         public ScriptBuilder EmitJump(OpCode op, short offset)

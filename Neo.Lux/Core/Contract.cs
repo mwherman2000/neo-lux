@@ -12,8 +12,13 @@ namespace Neo.Lux.Core
         Payable = 1 << 2
     }
 
+    public enum TriggerType : byte
+    {
+        Verification = 0x00,
+        Application = 0x10
+    }
 
-    public class Contract
+    public class Contract: IInteropInterface
     {
         public byte[] script;
         public byte[] parameterList;

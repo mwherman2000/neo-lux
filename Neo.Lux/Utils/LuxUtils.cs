@@ -35,11 +35,24 @@ namespace Neo.Lux.Utils
         {
             while (places > 0)
             {
-                val*= 10;
+                val *= 10;
                 places--;
             }
 
             return (long)val;
+        }
+
+
+        public static decimal ToDecimal(this BigInteger val, int places = 8)
+        {
+            var result = (decimal)((long)val);
+            while (places > 0)
+            {
+                result /= 10m;
+                places--;
+            }
+
+            return result;
         }
 
         public static string ReverseHex(string hex)
