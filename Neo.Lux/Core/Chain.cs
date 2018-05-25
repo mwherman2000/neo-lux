@@ -81,7 +81,7 @@ namespace Neo.Lux.Core
         private Block lastBlock = null;
         public uint BlockHeight => lastBlock != null ? lastBlock.Height : 0;
 
-        private Action<string> Logger;
+        protected Action<string> Logger { get; private set; }
 
         private TriggerType currentTrigger;
         private decimal currentGas = 0;
@@ -474,8 +474,13 @@ namespace Neo.Lux.Core
         private bool Storage_Put(ExecutionEngine engine)
         {
             var storage = GetInteropFromStack<Storage>(engine);
+
             var key = engine.EvaluationStack.Pop().GetByteArray();
             var val = engine.EvaluationStack.Pop().GetByteArray();
+
+            var key_name = FormattingUtils.OutputData(key, false);
+            var val_name = FormattingUtils.OutputData(val, false);
+            Logger($"Storage.Put: {key_name} => {val_name}");
 
             storage.entries[key] = val;
             return true;
