@@ -2,6 +2,7 @@
 using Neo.Lux.Cryptography.ECC;
 using Neo.Lux.Utils;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -92,7 +93,7 @@ namespace Neo.Lux.Core
         }
     }
 
-    public struct Witness
+    public class Witness
     {
         public byte[] invocationScript;
         public byte[] verificationScript;
@@ -307,7 +308,7 @@ namespace Neo.Lux.Core
             }
         }
 
-        public void Sign(KeyPair key)
+        public void Sign(KeyPair key, IEnumerable<Witness> witnesses = null)
         {
             var txdata = this.Serialize(false);
 
@@ -315,9 +316,21 @@ namespace Neo.Lux.Core
             var pubkey = key.PublicKey;
             var signature = CryptoUtils.Sign(txdata, privkey, pubkey);
 
+            var witList = new List<Witness>();
+
             var invocationScript = ("40" + signature.ByteToHex()).HexToBytes();
             var verificationScript = key.signatureScript.HexToBytes();
-            this.witnesses = new Witness[] { new Witness() { invocationScript = invocationScript, verificationScript = verificationScript } };
+            witList.Add(new Witness() { invocationScript = invocationScript, verificationScript = verificationScript });
+
+            if (witnesses != null)
+            {
+                foreach (var entry in witnesses)
+                {
+                    witList.Add(entry);
+                }
+            }
+            
+            this.witnesses = witList.ToArray();
         }
 
         private UInt256 _hash = null;

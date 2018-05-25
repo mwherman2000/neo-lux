@@ -59,10 +59,9 @@ namespace Neo.Lux.Core
             return Chain.GetBlock(height);
         }
 
-        public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
+        public override Dictionary<string, decimal> GetAssetBalancesOf(UInt160 scriptHash)
         {
-            var hash = address.AddressToScriptHash();
-            var account = Chain.GetAccount(new UInt160(hash));
+            var account = Chain.GetAccount(scriptHash);
 
             var result = new Dictionary<string, decimal>();
 

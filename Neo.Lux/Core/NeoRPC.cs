@@ -34,9 +34,9 @@ namespace Neo.Lux.Core
             return new LocalRPCNode(30333, "http://localhost:4000");
         }
 
-        public override Dictionary<string, decimal> GetAssetBalancesOf(string address)
+        public override Dictionary<string, decimal> GetAssetBalancesOf(UInt160 scriptHash)
         {
-            var response = QueryRPC("getaccountstate", new object[] { address });
+            var response = QueryRPC("getaccountstate", new object[] { scriptHash.ToAddress() });
             var result = new Dictionary<string, decimal>();
 
             var resultNode = response.GetNode("result");

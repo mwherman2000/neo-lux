@@ -48,7 +48,7 @@ namespace Neo.Lux.Utils
 
         public ScriptBuilder EmitPush(bool data)
         {
-            return Emit(data ? OpCode.PUSHT : OpCode.PUSHF);
+            return Emit(data ? OpCode.PUSH1 : OpCode.PUSH0);
         }
 
         public ScriptBuilder EmitPush(byte[] data)

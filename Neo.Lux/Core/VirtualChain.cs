@@ -113,7 +113,7 @@ namespace Neo.Lux.Core
 
             AddBlock(block);
 
-            this.Time += 15 * 1000;
+            this.Time += (10 + (uint)(block.ConsensusData % 5));
         }
 
     }

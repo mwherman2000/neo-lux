@@ -98,5 +98,10 @@ namespace Neo.Lux.Cryptography
             temp = temp.SubArray(1, 20);
             return temp;
         }
+
+        public override string ToString()
+        {
+            return this.address;
+        }
     }
 }

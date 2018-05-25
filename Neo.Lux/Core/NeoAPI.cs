@@ -424,7 +424,6 @@ namespace Neo.Lux.Core
 
             var targetAssetID = LuxUtils.ReverseHex(assetID).HexToBytes();
             
-
             var sources = unspent[symbol];
             decimal selected = 0;
 
@@ -624,20 +623,41 @@ namespace Neo.Lux.Core
             return ok ? tx : null;
         }
 
-        public Transaction WithdrawAsset(KeyPair toKey, string fromAddress, string symbol, decimal amount)
+        public Transaction WithdrawAsset(KeyPair toKey, string fromAddress, string symbol, decimal amount, byte[] verificationScript)
         {
             var fromScriptHash = new UInt160(fromAddress.GetScriptHashFromAddress());
             var target = new Transaction.Output() { scriptHash = new UInt160(toKey.address.GetScriptHashFromAddress()), value = amount };
             var targets = new List<Transaction.Output>() { target };
-            return WithdrawAsset(toKey, fromScriptHash, symbol, targets);
+            return WithdrawAsset(toKey, fromScriptHash, symbol, targets, verificationScript);
         }
 
-        public Transaction WithdrawAsset(KeyPair toKey, UInt160 fromScripthash, string symbol, IEnumerable<Transaction.Output> targets)
+        public Transaction WithdrawAsset(KeyPair toKey, UInt160 fromScripthash, string symbol, IEnumerable<Transaction.Output> targets, byte[] verificationScript)
         {
+
+            var check = verificationScript.ToScriptHash();
+            if (check != fromScripthash)
+            {
+                throw new ArgumentException("Invalid verification script");
+            }
+
             List<Transaction.Input> inputs;
             List<Transaction.Output> outputs;
-
             GenerateInputsOutputs(fromScripthash, symbol, targets, out inputs, out outputs);
+
+
+            List<Transaction.Input> gas_inputs;
+            List<Transaction.Output> gas_outputs;
+            GenerateInputsOutputs(toKey, "GAS", null, out gas_inputs, out gas_outputs);
+
+            foreach (var entry in gas_inputs)
+            {
+                inputs.Add(entry);
+            }
+
+            foreach (var entry in gas_outputs)
+            {
+                outputs.Add(entry);
+            }
 
             Transaction tx = new Transaction()
             {
@@ -649,7 +669,8 @@ namespace Neo.Lux.Core
                 outputs = outputs.ToArray()
             };
 
-            tx.Sign(toKey);
+            var witness = new Witness { invocationScript = ("0014" + toKey.address.AddressToScriptHash().ByteToHex()).HexToBytes(), verificationScript = verificationScript };
+            tx.Sign(toKey, new Witness[] { witness });
 
             var ok = SendTransaction(tx);
             return ok ? tx : null;
@@ -707,12 +728,18 @@ namespace Neo.Lux.Core
             return result;
         }
 
+        public abstract Dictionary<string, decimal> GetAssetBalancesOf(UInt160 hash);
+
         public Dictionary<string, decimal> GetAssetBalancesOf(KeyPair key)
         {
             return GetAssetBalancesOf(key.address);
         }
 
-        public abstract Dictionary<string, decimal> GetAssetBalancesOf(string address);
+        public Dictionary<string, decimal> GetAssetBalancesOf(string address)
+        {
+            var hash = new UInt160(address.AddressToScriptHash());
+            return GetAssetBalancesOf(hash);
+        }
 
         public bool IsAsset(string symbol)
         {

@@ -286,12 +286,12 @@ namespace Neo.Lux.Utils
 
         public static DateTime ToDateTime(this uint timestamp)
         {
-            return unixEpoch.AddSeconds(timestamp).ToLocalTime();
+            return unixEpoch.AddSeconds(timestamp);
         }
 
         public static DateTime ToDateTime(this ulong timestamp)
         {
-            return unixEpoch.AddSeconds(timestamp).ToLocalTime();
+            return unixEpoch.AddSeconds(timestamp);
         }
 
         public static string ToHexString(this IEnumerable<byte> value)
