@@ -335,12 +335,12 @@ namespace Neo.Lux.Core
             else
             if (item is VM.Types.Integer)
             {
-                return item.GetBigInteger();
+                return item.GetByteArray();
             }
             else
             if (item is VM.Types.Boolean)
             {
-                return item.GetBoolean();
+                return item.GetByteArray();
             }
             else
             {
@@ -506,6 +506,11 @@ namespace Neo.Lux.Core
             return true;
         }
 
+        protected virtual bool ValidateWitness(UInt160 a, UInt160 b)
+        {
+            return a.Equals(b);
+        }
+
         public bool Runtime_CheckWitness(ExecutionEngine engine)
         {
             byte[] hashOrPubkey = engine.EvaluationStack.Pop().GetByteArray();
@@ -530,7 +535,7 @@ namespace Neo.Lux.Core
 
                     Logger($"Comparing {address} to {other_address}");
 
-                    if (output.scriptHash == hash)
+                    if (ValidateWitness(output.scriptHash, hash))
                     {
                         result = true;
                         break;

@@ -65,6 +65,23 @@ namespace Neo.Lux.Core
             }
         }
 
+        private Dictionary<UInt160, UInt160> _witnessMap = new Dictionary<UInt160, UInt160>();
+
+        public void BypassKey(UInt160 src, UInt160 dest)
+        {
+            _witnessMap[dest] = src;
+        }
+
+
+        protected override bool ValidateWitness(UInt160 a, UInt160 b)
+        {
+            if (_witnessMap.ContainsKey(a) && _witnessMap[a] == b){
+                return true;
+            }
+
+            return base.ValidateWitness(a, b);
+        }
+
         protected override uint GetTime()
         {
             return this.Time;
