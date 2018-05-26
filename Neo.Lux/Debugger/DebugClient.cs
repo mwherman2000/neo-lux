@@ -12,14 +12,29 @@ namespace Neo.Lux.Debugger
         private TcpClient _client;
         private NetworkStream _stream;
 
+        public bool IsConnected => _client != null;
+
         public DebugClient()
         {
-            this._client = new TcpClient(DebugServer.SERVER_IP, DebugServer.PORT_NO);
-            _stream = _client.GetStream();
+            try
+            {
+                this._client = new TcpClient(DebugServer.SERVER_IP, DebugServer.PORT_NO);
+                _stream = _client.GetStream();
+            }
+            catch
+            {
+                _client = null;
+                _stream = null;
+            }
         }
 
         public void WriteLine(string msg)
         {
+            if (!IsConnected)
+            {
+                return;
+            }
+
             string debuggerData = $"LOG,{msg}#\n";
             byte[] bytesToSend = UTF8Encoding.UTF8.GetBytes(debuggerData);
 
@@ -28,6 +43,11 @@ namespace Neo.Lux.Debugger
 
         public void SendScript(byte[] script)
         {
+            if (!IsConnected)
+            {
+                return;
+            }
+
             string debuggerData = $"CODE,{script.ByteToHex()}#\n";
             byte[] bytesToSend = UTF8Encoding.UTF8.GetBytes(debuggerData);
 
@@ -36,14 +56,24 @@ namespace Neo.Lux.Debugger
 
         public void SendEvent(string name, object[] args)
         {
+            if (!IsConnected)
+            {
+                return;
+            }
+
             string debuggerData = $"EVENT,{name}#\n";
             byte[] bytesToSend = UTF8Encoding.UTF8.GetBytes(debuggerData);
 
             _stream.Write(bytesToSend, 0, bytesToSend.Length);
         }
 
-        public void Step(ExecutionEngine vm) { 
-            
+        public void Step(ExecutionEngine vm)
+        {
+            if (!IsConnected)
+            {
+                return;
+            }
+
             string debuggerData = $"STEP,{vm.State},{vm.CurrentContext.ScriptHash.ToAddress()},{vm.CurrentContext.InstructionPointer}#\n";
             byte[] bytesToSend = UTF8Encoding.UTF8.GetBytes(debuggerData);
 
