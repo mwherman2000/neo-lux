@@ -65,7 +65,10 @@ namespace Neo.Lux.VM
             State &= ~VMState.BREAK;
             while (!State.HasFlag(VMState.HALT) && !State.HasFlag(VMState.FAULT) && !State.HasFlag(VMState.BREAK))
             {
-                onStep(this);
+                if (onStep != null)
+                {
+                    onStep(this);
+                }
                 StepInto();
             }
         }
