@@ -120,8 +120,16 @@ namespace Neo.Lux.Core
             }
         }
 
-        protected void AddBlock(Block block)
+        protected bool AddBlock(Block block)
         {
+            foreach (var tx in block.transactions)
+            {
+                if (!ValidateTransaction(tx))
+                {
+                    return false;
+                }
+            }
+
             _blocks[block.Height] = block;
             _blockMap[block.Hash] = block;
 
@@ -136,6 +144,33 @@ namespace Neo.Lux.Core
             }
 
             lastBlock = block;
+
+            return true;
+        }
+
+        private bool ValidateTransaction(Transaction tx)
+        {
+            switch (tx.type)
+            {
+                case TransactionType.ContractTransaction:
+                case TransactionType.InvocationTransaction:
+                    {
+                        if (tx.script != null)
+                        {
+                            var vm = ExecuteVM(tx, TriggerType.Verification);
+                            var stack = vm.EvaluationStack;
+                            var result = stack != null && stack.Count >= 1 && stack.Peek(0).GetBoolean();
+
+                            if (!result)
+                            {
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+            }
+
+            return true;
         }
 
         private void ExecuteTransaction(Transaction tx)
@@ -178,23 +213,9 @@ namespace Neo.Lux.Core
                         break;
                     }
 
-                case TransactionType.ContractTransaction:
                 case TransactionType.InvocationTransaction:
                     {
-                        if (tx.script != null)
-                        {
-                            var vm = ExecuteVM(tx, TriggerType.Verification);
-                            var stack = vm.EvaluationStack;
-                            var result = stack != null && stack.Count >= 1 && stack.Peek(0).GetBoolean();
-
-                            if (result)
-                            {
-                                if (tx.type == TransactionType.InvocationTransaction)
-                                {
-                                    ExecuteVM(tx, TriggerType.Application);                                    
-                                }
-                            }
-                        }
+                        ExecuteVM(tx, TriggerType.Application);
                         break;
                     }
             }
@@ -274,7 +295,7 @@ namespace Neo.Lux.Core
 
         public List<Notification> GetNotifications(Transaction tx)
         {
-            if (notifications.ContainsKey(tx.Hash)){
+            if (tx != null && notifications.ContainsKey(tx.Hash)){
                 return notifications[tx.Hash];
             }
 
@@ -459,6 +480,9 @@ namespace Neo.Lux.Core
             var storage = GetInteropFromStack<Storage>(engine);
             var key = engine.EvaluationStack.Pop().GetByteArray();
 
+            var key_name = FormattingUtils.OutputData(key, false);
+            Logger($"Storage.Get: {key_name}");
+
             if (storage.entries.ContainsKey(key))
             {
                 engine.EvaluationStack.Push(storage.entries[key]);
@@ -490,6 +514,9 @@ namespace Neo.Lux.Core
         {
             var storage = GetInteropFromStack<Storage>(engine);
             var key = engine.EvaluationStack.Pop().GetByteArray();
+
+            var key_name = FormattingUtils.OutputData(key, false);
+            Logger($"Storage.Delete: {key_name}");
 
             if (storage.entries.ContainsKey(key))
             {

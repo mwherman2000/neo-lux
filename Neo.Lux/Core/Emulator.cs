@@ -20,9 +20,8 @@ namespace Neo.Lux.Core
         }
 
         protected override bool SendTransaction(Transaction tx)
-        {
-            Chain.GenerateBlock(new Transaction[] { tx });
-            return true;
+        {            
+            return Chain.GenerateBlock(new Transaction[] { tx }); 
         }
 
         public override byte[] GetStorage(string scriptHash, byte[] key)

@@ -90,7 +90,7 @@ namespace Neo.Lux.Core
             return this.Time;
         }
 
-        public void GenerateBlock(IEnumerable<Transaction> transactions)
+        public bool GenerateBlock(IEnumerable<Transaction> transactions)
         {
             var block = new Block();
 
@@ -111,9 +111,14 @@ namespace Neo.Lux.Core
                 index++;
             }
 
-            AddBlock(block);
+            if (!AddBlock(block))
+            {
+                return false;
+            }
 
             this.Time += (10 + (uint)(block.ConsensusData % 5));
+
+            return true;
         }
 
     }
