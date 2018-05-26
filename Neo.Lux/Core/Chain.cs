@@ -120,12 +120,13 @@ namespace Neo.Lux.Core
             }
         }
 
-        protected bool AddBlock(Block block)
+        public bool AddBlock(Block block)
         {
             foreach (var tx in block.transactions)
             {
                 if (!ValidateTransaction(tx))
                 {
+                    ValidateTransaction(tx);
                     return false;
                 }
             }
@@ -184,8 +185,11 @@ namespace Neo.Lux.Core
                 account.Withdraw(output.assetID, output.value.ToBigInteger(), input);
 
                 var asset = GetAsset(output.assetID);
-                var address = output.scriptHash.ToAddress();
-                Logger($"Withdrawing {output.value} {asset.name} from {address}");
+                if (asset != null)
+                {
+                    var address = output.scriptHash.ToAddress();
+                    Logger($"Withdrawing {output.value} {asset.name} from {address}");
+                }
             }
 
             uint index = 0;

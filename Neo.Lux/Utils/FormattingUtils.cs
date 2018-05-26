@@ -1,4 +1,5 @@
-﻿using Neo.Lux.Cryptography;
+﻿using Neo.Lux.Core;
+using Neo.Lux.Cryptography;
 using Neo.Lux.VM;
 using System;
 using System.Collections;
@@ -8,19 +9,6 @@ using System.Text;
 
 namespace Neo.Lux.Utils
 {
-    public class Emulator
-    {
-        public enum Type
-        {
-            Unknown,
-            String,
-            Boolean,
-            Integer,
-            Array,
-            ByteArray
-        }
-    }
-
     public static class FormattingUtils
     {
         public static string StackItemAsString(StackItem item, bool addQuotes = false, Emulator.Type hintType = Emulator.Type.Unknown)

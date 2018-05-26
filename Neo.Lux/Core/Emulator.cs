@@ -5,11 +5,21 @@ using Neo.Lux.Utils;
 
 namespace Neo.Lux.Core
 {
-    public class NeoEmulator: NeoAPI
+    public class Emulator: NeoAPI
     {
+        public enum Type
+        {
+            Unknown,
+            String,
+            Boolean,
+            Integer,
+            Array,
+            ByteArray
+        }
+
         public VirtualChain Chain { get; private set; }
 
-        public NeoEmulator(KeyPair owner)
+        public Emulator(KeyPair owner)
         {
             this.Chain = new VirtualChain(this, owner);
         }
@@ -89,7 +99,7 @@ namespace Neo.Lux.Core
                 var tx = Chain.GetTransaction(entry.prevHash);
                 var output = tx.outputs[entry.prevIndex];
 
-                var unspent = new UnspentEntry() { index = entry.prevIndex, txid = entry.prevHash.ToString().Replace("0x",""), value = output.value };
+                var unspent = new UnspentEntry() { index = entry.prevIndex, hash = entry.prevHash, value = output.value };
 
                 var symbol = NeoAPI.SymbolFromAssetID(output.assetID);
 
@@ -120,6 +130,11 @@ namespace Neo.Lux.Core
         {
             base.SetLogger(logger);
             this.Chain.SetLogger(logger);
+        }
+
+        public override List<UnspentEntry> GetClaimable(UInt160 hash, out decimal amount)
+        {
+            throw new NotImplementedException();
         }
     }
 }
