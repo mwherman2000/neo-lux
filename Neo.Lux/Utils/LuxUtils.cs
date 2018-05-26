@@ -42,7 +42,6 @@ namespace Neo.Lux.Utils
             return (long)val;
         }
 
-
         public static decimal ToDecimal(this BigInteger val, int places = 8)
         {
             var result = (decimal)((long)val);
@@ -411,11 +410,6 @@ namespace Neo.Lux.Utils
                 }
             }
             return new Fixed8(sum);
-        }
-
-        public static Fixed8 Sum<TSource>(this IEnumerable<TSource> source, Func<TSource, Fixed8> selector)
-        {
-            return source.Select(selector).Sum();
         }
 
         internal static IEnumerable<TResult> WeightedFilter<T, TResult>(this IList<T> source, double start, double end, Func<T, long> weightSelector, Func<T, long, TResult> resultSelector)
