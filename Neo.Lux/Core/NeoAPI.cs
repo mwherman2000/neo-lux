@@ -328,6 +328,18 @@ namespace Neo.Lux.Core
                 sb.EmitPush((BigInteger)item);
             }
             else
+            if (item is int || item is sbyte || item is short)
+            {
+                var n = (int)item;
+                sb.EmitPush((BigInteger)n);
+            }
+            else
+            if (item is uint || item is byte || item is ushort)
+            {
+                var n = (uint)item;
+                sb.EmitPush((BigInteger)n);
+            }
+            else
             {
                 throw new NeoException("Unsupported contract parameter: " + item.ToString());
             }
