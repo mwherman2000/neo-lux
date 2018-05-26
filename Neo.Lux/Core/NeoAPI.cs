@@ -164,7 +164,7 @@ namespace Neo.Lux.Core
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6", "BridgeProtocol", 8);
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd", "Switcheo", 8);
                 AddToken("OBT", "0e86a40588f715fcaf7acd1812d50af478e6e917", "Orbis", 8);
-                AddToken("SOUL", "4b4f63919b9ecfd2483f0c72ff46ed31b5bbb7a4", "Phantasma", 8);
+                AddToken("SOUL", "ed07cffad18f1308db51920d99a2af60ac66a7b3", "Phantasma", 8); //OLD 4b4f63919b9ecfd2483f0c72ff46ed31b5bbb7a4
             }
 
             return _tokenScripts;
@@ -476,7 +476,7 @@ namespace Neo.Lux.Core
 
                 var input = new Transaction.Input()
                 {
-                    prevHash = new UInt256(LuxUtils.ReverseHex(src.txid).HexToBytes()),
+                    prevHash = src.hash,
                     prevIndex = src.index,
                 };
 
@@ -688,6 +688,65 @@ namespace Neo.Lux.Core
             return ok ? tx : null;
         }
 
+        public Transaction ClaimGas(KeyPair ownerKey, string fromAddress, byte[] verificationScript)
+        {
+            var fromScriptHash = new UInt160(fromAddress.GetScriptHashFromAddress());
+            return ClaimGas(ownerKey, fromScriptHash, verificationScript);
+        }
+
+        public Transaction ClaimGas(KeyPair ownerKey, UInt160 fromScripthash, byte[] verificationScript)
+        {
+
+            var check = verificationScript.ToScriptHash();
+            if (check != fromScripthash)
+            {
+                throw new ArgumentException("Invalid verification script");
+            }
+
+            decimal amount;
+            var claimable = GetClaimable(fromScripthash, out amount);
+
+            var references = new List<Transaction.Input>();
+            foreach (var entry in claimable)
+            {
+                references.Add(new Transaction.Input() { prevHash = entry.hash, prevIndex = entry.index });
+            }
+
+            if (amount <=0)
+            {
+                throw new ArgumentException("No GAS to claim at this address");
+            }
+
+            List<Transaction.Input> inputs;
+            List<Transaction.Output> outputs;
+            GenerateInputsOutputs(ownerKey, "GAS", null, out inputs, out outputs);
+
+            outputs.Add(
+            new Transaction.Output()
+            {
+                scriptHash = fromScripthash,
+                assetID = NeoAPI.GetAssetID("GAS"),
+                value = amount
+            });
+
+            Transaction tx = new Transaction()
+            {
+                type = TransactionType.ClaimTransaction,
+                version = 0,
+                script = null,
+                gas = -1,
+                references = references.ToArray(),
+                inputs = inputs.ToArray(),
+                outputs =outputs.ToArray(),
+            };
+
+            var witness = new Witness { invocationScript = ("0014" + ownerKey.address.AddressToScriptHash().ByteToHex()).HexToBytes(), verificationScript = verificationScript };
+            tx.Sign(ownerKey, new Witness[] { witness });
+
+            var ok = SendTransaction(tx);
+            return ok ? tx : null;
+        }
+
         public Dictionary<string, decimal> GetBalancesOf(KeyPair key)
         {
             return GetBalancesOf(key.address);
@@ -779,12 +838,14 @@ namespace Neo.Lux.Core
 
         public struct UnspentEntry
         {
-            public string txid;
+            public UInt256 hash;
             public uint index;
             public decimal value;
         }
 
-        public abstract Dictionary<string, List<UnspentEntry>> GetUnspent(UInt160 scripthash);
+        public abstract List<UnspentEntry> GetClaimable(UInt160 hash, out decimal amount);
+
+        public abstract Dictionary<string, List<UnspentEntry>> GetUnspent(UInt160 scripthash);        
 
         public Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
         {

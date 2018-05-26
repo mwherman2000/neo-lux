@@ -87,12 +87,38 @@ namespace Neo.Lux.Core
                 var unspentNode = child.GetNode("unspent");
                 foreach (var entry in unspentNode.Children)
                 {
-                    var temp = new UnspentEntry() { txid = entry.GetString("txid"), value = entry.GetDecimal("value"), index = entry.GetUInt32("n") };
+                    var txid = entry.GetString("txid");
+                    var temp = new UnspentEntry() { hash = new UInt256(LuxUtils.ReverseHex(txid).HexToBytes()), value = entry.GetDecimal("value"), index = entry.GetUInt32("n") };
                     list.Add(temp);
                 }
             }
 
             return unspents;
+        }
+
+        // Note: This current implementation requires NeoScan running at port 4000
+        public override List<UnspentEntry> GetClaimable(UInt160 hash, out decimal amount)
+        {
+            var url = this.neoscanUrl + "/api/main_net/v1/get_claimable/" + hash.ToAddress();
+            var json = RequestUtils.GetWebRequest(url);
+
+            var root = LunarParser.JSON.JSONReader.ReadFromString(json);
+            var result = new List<UnspentEntry>();
+
+            amount = root.GetDecimal("unclaimed");
+
+            root = root["claimable"];
+
+            foreach (var child in root.Children)
+            {
+                var txid = child.GetString("txid");
+                var index = child.GetUInt32("n");
+                var value = child.GetDecimal("unclaimed");
+
+                result.Add(new UnspentEntry() { hash = new UInt256(LuxUtils.ReverseHex(txid).HexToBytes()), index = index, value = value });
+            }
+
+            return result;
         }
 
         public bool SendRawTransaction(string hexTx)

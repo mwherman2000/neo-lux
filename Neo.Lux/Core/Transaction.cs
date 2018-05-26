@@ -312,15 +312,18 @@ namespace Neo.Lux.Core
         {
             var txdata = this.Serialize(false);
 
-            var privkey = key.PrivateKey;
-            var pubkey = key.PublicKey;
-            var signature = CryptoUtils.Sign(txdata, privkey, pubkey);
-
             var witList = new List<Witness>();
 
-            var invocationScript = ("40" + signature.ByteToHex()).HexToBytes();
-            var verificationScript = key.signatureScript.HexToBytes();
-            witList.Add(new Witness() { invocationScript = invocationScript, verificationScript = verificationScript });
+            if (key != null)
+            {
+                var privkey = key.PrivateKey;
+                var pubkey = key.PublicKey;
+                var signature = CryptoUtils.Sign(txdata, privkey, pubkey);
+
+                var invocationScript = ("40" + signature.ByteToHex()).HexToBytes();
+                var verificationScript = key.signatureScript.HexToBytes();
+                witList.Add(new Witness() { invocationScript = invocationScript, verificationScript = verificationScript });
+            }
 
             if (witnesses != null)
             {
