@@ -1,8 +1,8 @@
-﻿using Neo.Lux.Cryptography;
-using Neo.Lux.Cryptography.ECC;
+﻿using Neo.Lux.Cryptography.ECC;
 using Neo.Lux.Utils;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace Neo.Lux.Cryptography
 {
@@ -65,8 +65,8 @@ namespace Neo.Lux.Cryptography
         public static KeyPair GenerateAddress()
         {
             var bytes = new byte[32];
-            var rnd = new Random();
-            rnd.NextBytes(bytes);
+            var rnd = new RNGCryptoServiceProvider();
+            rnd.GetBytes(bytes);
             return new KeyPair(bytes);
         }
 
