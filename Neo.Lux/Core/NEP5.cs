@@ -3,6 +3,8 @@ using Neo.Lux.Utils;
 using System.Numerics;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace Neo.Lux.Core
 {
@@ -101,7 +103,6 @@ namespace Neo.Lux.Core
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine(e);
                     throw new NeoException("Api did not return a value.", e);
                 }
 
@@ -195,13 +196,82 @@ namespace Neo.Lux.Core
             return Transfer(from_key, to_address.GetScriptHashFromAddress(), value);
         }
 
+        public Transaction Transfer(KeyPair from_key, UInt160 to_address_hash, decimal value)
+        {
+            return Transfer(from_key, to_address_hash.ToArray(), value);
+        }
+
         public Transaction Transfer(KeyPair from_key, byte[] to_address_hash, decimal value)
         {
-            Console.WriteLine("NEP5 token " + Name + " transfer " + value);
             BigInteger amount = ConvertToBigInt(value);
 
             var sender_address_hash = from_key.address.GetScriptHashFromAddress();
             var response = api.CallContract(from_key, scriptHash, "transfer", new object[] { sender_address_hash, to_address_hash, amount });
+            return response;
+        }
+
+        // transfer to multiple addresses
+        public Transaction Transfer(KeyPair from_key, Dictionary<string, decimal> transfers)
+        {
+            var temp = new Dictionary<byte[], decimal>(new ByteArrayComparer());
+            foreach (var entry in transfers)
+            {
+                if (!entry.Key.IsValidAddress())
+                {
+                    throw new ArgumentException($"{entry.Key} is not a valid address");
+                }
+
+                var hash = entry.Key.AddressToScriptHash();
+                temp[hash] = entry.Value;
+            }
+
+            return Transfer(from_key, temp);
+        }
+
+        // transfer to multiple addresses
+        public Transaction Transfer(KeyPair from_key, Dictionary<byte[], decimal> transfers)
+        {
+            int max_transfer_count = 6;
+            if (transfers.Count > max_transfer_count)
+            {
+                throw new ArgumentException("Max transfers per call = " + max_transfer_count);
+            }
+
+            var scripts = new List<byte[]>();
+            
+            var sender_address_hash = from_key.address.GetScriptHashFromAddress();
+
+            int index = 0;
+            foreach (var entry in transfers)
+            {
+                if (entry.Value <= 0)
+                {
+                    var addr = new UInt160(entry.Key).ToAddress();
+                    throw new ArgumentException($"Invalid amount {entry.Value} for address {addr}");
+                }
+
+                BigInteger amount = ConvertToBigInt(entry.Value);
+
+                var isLast = index == transfers.Count - 1;
+                var args = new object[] { sender_address_hash, entry.Key, amount };
+                var bytes = NeoAPI.GenerateScript(scriptHash, new object[] { "transfer", args }, isLast);
+
+                scripts.Add(bytes);
+                index++;
+            }
+
+            var final_size = scripts.Sum(x => x.Length);
+            byte[] final_script = new byte[final_size];
+
+            using (var stream = new MemoryStream(final_script))
+            {
+                foreach (byte[] bytes in scripts)
+                {
+                    stream.Write(bytes, 0, bytes.Length);
+                }
+            }
+            
+            var response = api.CallContract(from_key, scriptHash, final_script);
             return response;
         }
 

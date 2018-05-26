@@ -345,7 +345,7 @@ namespace Neo.Lux.Core
             }
         }
 
-        public static byte[] GenerateScript(UInt160 scriptHash, object[] args)
+        public static byte[] GenerateScript(UInt160 scriptHash, object[] args, bool addNonce = true)
         {
             using (var sb = new ScriptBuilder())
             {
@@ -367,12 +367,15 @@ namespace Neo.Lux.Core
                 
                 sb.EmitAppCall(scriptHash, false);
 
-                var timestamp = DateTime.UtcNow.ToTimestamp();
-                var nonce = BitConverter.GetBytes(timestamp);
+                if (addNonce)
+                {
+                    var timestamp = DateTime.UtcNow.ToTimestamp();
+                    var nonce = BitConverter.GetBytes(timestamp);
 
-                //sb.Emit(OpCode.THROWIFNOT);
-                sb.Emit(OpCode.RET);
-                sb.EmitPush(nonce);
+                    //sb.Emit(OpCode.THROWIFNOT);
+                    sb.Emit(OpCode.RET);
+                    sb.EmitPush(nonce);
+                }
 
                 var bytes = sb.ToArray();
 
