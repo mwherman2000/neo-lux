@@ -62,11 +62,15 @@ namespace Neo.Lux.Cryptography
             return new KeyPair(privateKey);
         }
 
+        private static RNGCryptoServiceProvider rnd = new RNGCryptoServiceProvider();
+
         public static KeyPair GenerateAddress()
         {
             var bytes = new byte[32];
-            var rnd = new RNGCryptoServiceProvider();
-            rnd.GetBytes(bytes);
+            lock (rnd)
+            {
+                rnd.GetBytes(bytes);
+            }
             return new KeyPair(bytes);
         }
 
