@@ -10,12 +10,14 @@ namespace Neo.Lux.Core
         public uint Version;
         public uint Height;
         public byte[] MerkleRoot;
+        public uint Timestamp;
         public UInt256 PreviousHash;
-        public DateTime Timestamp;
-        public long ConsensusData;
+        public UInt64 ConsensusData;
         public UInt160 Validator;
         public Transaction[] transactions;
         public Witness witness;
+
+        public DateTime Date => Timestamp.ToDateTime();
 
         public override string ToString()
         {
@@ -57,10 +59,18 @@ namespace Neo.Lux.Core
                     writer.Write(Version);
                     writer.Write(PreviousHash != null ? PreviousHash.ToArray() : new byte[32]);
                     writer.Write(MerkleRoot != null ? MerkleRoot : new byte[32]);
-                    writer.Write((uint)Timestamp.ToTimestamp());
+                    writer.Write((uint)Date.ToTimestamp());
                     writer.Write(Height);
-                    writer.Write(ConsensusData);
+                    writer.Write((UInt64)ConsensusData);
                     writer.Write(Validator!=null ? Validator.ToArray(): new byte[20]);
+                    writer.Write((byte)1);
+                    witness.Serialize(writer);
+                    writer.WriteVarInt(transactions.Length);
+                    foreach (var tx in transactions)
+                    {
+                        var bytes = tx.Serialize(true);
+                        writer.Write(bytes);
+                    }
                     return stream.ToArray();
                 }
             }
@@ -73,9 +83,9 @@ namespace Neo.Lux.Core
             block.Version = reader.ReadUInt32();
             block.PreviousHash = new UInt256(reader.ReadBytes(32));
             block.MerkleRoot = reader.ReadBytes(32);
-            block.Timestamp = reader.ReadUInt32().ToDateTime();
+            block.Timestamp = reader.ReadUInt32();
             block.Height = reader.ReadUInt32();
-            block.ConsensusData = reader.ReadInt64();
+            block.ConsensusData = reader.ReadUInt64();
 
             var nextConsensus = reader.ReadBytes(20);
             block.Validator = new UInt160(nextConsensus);
