@@ -95,8 +95,21 @@ namespace Neo.Lux.Core
                     if (_decimals < 0)
                     {
                         response = api.InvokeScript(scriptHash, "decimals", new object[] { "" });
-                        var bytes = (byte[])response.stack[0];
-                        _decimals = new BigInteger(bytes);
+
+                        if (response.stack[0] is byte[])
+                        {
+                            var bytes = (byte[])response.stack[0];
+                            _decimals = new BigInteger(bytes);
+                        }
+                        else
+                        if (response.stack[0] is BigInteger)
+                        {
+                            _decimals = (BigInteger)(response.stack[0]);
+                        }
+                        else
+                        {
+                            _decimals = (int)response.stack[0];
+                        }
                     }
 
                     return _decimals;
@@ -228,10 +241,11 @@ namespace Neo.Lux.Core
             return Transfer(from_key, temp);
         }
 
+        public const int max_transfer_count = 3;
+
         // transfer to multiple addresses
         public Transaction Transfer(KeyPair from_key, Dictionary<byte[], decimal> transfers)
         {
-            int max_transfer_count = 6;
             if (transfers.Count > max_transfer_count)
             {
                 throw new ArgumentException("Max transfers per call = " + max_transfer_count);
