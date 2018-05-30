@@ -154,6 +154,28 @@ Use caution, as most NEOLux methods are blocking calls; in Unity the proper way 
 	StartCoroutine(SyncBalance());
 ```
 
+# Airdrop / Snapshots
+
+Latest versions of NEOLux have support for doing snapshots of the blockchain. This can be useful for example to find every wallet with a certain token balance at a certain date.
+Running a full local node using neo-cli full synced is extremely recommended when using snapshot features.
+
+The following code extracts all transactions related to a specific NEP5 token.
+```c#            
+	var api = new LocalRPCNode(10332, "http://neoscan.io");
+
+	uint startBlock = 2313827;
+	uint endBlock = 2320681;
+
+	var token = api.GetToken("SOUL");
+	var soul_tx = SnapshotTools.GetTokenTransactions(token, startBlock, endBlock);
+	var soul_lines = new List<string>();
+	foreach (var tx in soul_tx)
+	{
+		soul_lines.Add(tx.Hash+","+tx.Serialize().ByteToHex());
+	}
+	File.AppendAllLines("soul_txs.txt", soul_lines.ToArray());
+```
+			
 ## Using with Unity
 
 Don't drop the source code of NEOLux inside Unity, it won't work. Instead of the provided .UnityPackage file to install it (or use the included Demo project as a template for your project).
