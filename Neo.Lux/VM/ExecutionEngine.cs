@@ -60,7 +60,7 @@ namespace Neo.Lux.VM
                 InvocationStack.Pop().Dispose();
         }
 
-        public void Execute(Action<ExecutionEngine> onStep)
+        public void Execute(Action<ExecutionEngine> onStep = null)
         {
             State &= ~VMState.BREAK;
             while (!State.HasFlag(VMState.HALT) && !State.HasFlag(VMState.FAULT) && !State.HasFlag(VMState.BREAK))
