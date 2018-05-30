@@ -384,8 +384,6 @@ namespace Neo.Lux.Core
 
                 foreach (var tx in block.transactions)
                 {
-                    tx.block = block;
-
                     switch (tx.type)
                     {
                         case TransactionType.ContractTransaction:

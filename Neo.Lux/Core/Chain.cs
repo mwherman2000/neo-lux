@@ -13,12 +13,30 @@ namespace Neo.Lux.Core
     public class Storage: IInteropInterface
     {
         public Dictionary<byte[], byte[]> entries = new Dictionary<byte[], byte[]>(new ByteArrayComparer());
+
+        public byte[] Get(byte[] key)
+        {
+            return entries.ContainsKey(key) ? entries[key] : null;
+        }
+
+        public byte[] Get(string key)
+        {
+            return Get(Encoding.UTF8.GetBytes(key));
+        }
     }
 
     public struct Notification
     {
-        public string name;
-        public object[] args;
+        public readonly UInt256 Hash;
+        public readonly string Name;
+        public readonly object[] Args;
+
+        public Notification(UInt256 hash, string name, object[] args)
+        {
+            this.Hash = hash;
+            this.Name = name;
+            this.Args = args;
+        }
     }
 
     public class Account
@@ -346,7 +364,7 @@ namespace Neo.Lux.Core
             return result;
         }
 
-        private object StackItemToObject(StackItem item)
+        public static object StackItemToObject(StackItem item)
         {
             if (item == null)
             {
@@ -461,7 +479,7 @@ namespace Neo.Lux.Core
                     notifications[tx.Hash] = list;
                 }
 
-                list.Add(new Notification() { name = eventName, args = eventArgs.ToArray() });
+                list.Add(new Notification(tx.Hash, eventName, eventArgs.ToArray()));
 
                 Logger(sb.ToString());
                 return true;
