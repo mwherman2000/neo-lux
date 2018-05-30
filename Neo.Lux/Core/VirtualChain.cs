@@ -95,11 +95,11 @@ namespace Neo.Lux.Core
             var block = new Block();
 
             var rnd = new Random();
-            block.ConsensusData = ((long)rnd.Next() << 32) + rnd.Next();
+            block.ConsensusData = ((UInt64)rnd.Next() << 32) + (UInt64)rnd.Next();
             block.Height = (uint)_blocks.Count;
             block.PreviousHash = _blocks.Count > 0 ? _blocks[(uint)(_blocks.Count - 1)].Hash : null;
             //block.MerkleRoot = 
-            block.Timestamp = this.Time.ToDateTime();
+            block.Timestamp = this.Time;
             //block.Validator = 0;
             block.Version = 0;
             block.transactions = new Transaction[transactions.Count()];
