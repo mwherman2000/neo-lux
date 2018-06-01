@@ -12,7 +12,7 @@ namespace Neo.Lux.Tests
         [OneTimeSetUp]
         public void Init()
         {
-            api = NeoDB.ForMainNet();
+            api = NeoRPC.ForTestNet();
             token = api.GetToken("RPX");
         }
 

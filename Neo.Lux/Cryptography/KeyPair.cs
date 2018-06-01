@@ -2,7 +2,7 @@
 using Neo.Lux.Utils;
 using System;
 using System.Linq;
-using System.Security.Cryptography;
+//using System.Security.Cryptography; // for RNGCryptoServiceProvider
 
 namespace Neo.Lux.Cryptography
 {
@@ -62,7 +62,7 @@ namespace Neo.Lux.Cryptography
             return new KeyPair(privateKey);
         }
 
-        private static RNGCryptoServiceProvider rnd = new RNGCryptoServiceProvider();
+        private static System.Security.Cryptography.RNGCryptoServiceProvider rnd = new System.Security.Cryptography.RNGCryptoServiceProvider();
 
         public static KeyPair GenerateAddress()
         {
