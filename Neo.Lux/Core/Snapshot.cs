@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Neo.Lux.Core
 {
@@ -45,8 +46,31 @@ namespace Neo.Lux.Core
             Register("Neo.Runtime.GetTime", engine => { engine.EvaluationStack.Push(currentBlock.Date.ToTimestamp()); return true; }, defaultGasCost);
             Register("Neo.Runtime.GetTrigger", engine => { engine.EvaluationStack.Push((int)TriggerType.Application); return true; }, defaultGasCost);
             Register("Neo.Runtime.CheckWitness", Runtime_CheckWitness, 0.2m);
-            //Register("Neo.Runtime.Log", Runtime_Log, defaultGasCost);
+            Register("Neo.Runtime.Log", Runtime_Log, defaultGasCost);
             Register("Neo.Runtime.Notify", Runtime_Notify, defaultGasCost);
+        }
+
+        public bool Runtime_Log(ExecutionEngine engine)
+        {
+            var msg = engine.EvaluationStack.Pop();
+            string eventName = JsonConvert.SerializeObject(msg);
+            var eventArgs = new List<object>();
+
+            List<Notification> list;
+            var tx = (Transaction)engine.ScriptContainer;
+
+            if (notifications.ContainsKey(tx.Hash))
+            {
+                list = notifications[tx.Hash];
+            }
+            else
+            {
+                list = new List<Notification>();
+                notifications[tx.Hash] = list;
+            }
+
+            list.Add(new Notification(tx.Hash, eventName, eventArgs.ToArray()));
+            return true;
         }
 
         private static T GetInteropFromStack<T>(ExecutionEngine engine) where T : class, IInteropInterface
@@ -288,12 +312,14 @@ namespace Neo.Lux.Core
         {
             UInt160 scriptHash = script.ToScriptHash();
             scripts[scriptHash] = script;
+            Console.WriteLine($"AddScript: scriptHash {scriptHash.ToString()} has {script.Length} bytes"); ;
             storage[scriptHash] = new Storage();
         }
 
         public byte[] GetScript(byte[] script_hash)
         {
             var hash = new UInt160(script_hash);
+            Console.WriteLine($"GetScript: scriptHash {script_hash.ToHexString()}");
             return scripts[hash];
         }
 
