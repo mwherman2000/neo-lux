@@ -290,7 +290,8 @@ namespace Neo.Lux.Core
                 {
                     if (index > 0)
                     {
-                        eventArgs.Add(Chain.StackItemToObject(item));
+                        object o = Chain.StackItemToObject(item);
+                        eventArgs.Add(o);
                     }
                     else
                     {

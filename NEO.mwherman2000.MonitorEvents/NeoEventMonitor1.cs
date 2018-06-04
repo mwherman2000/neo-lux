@@ -229,26 +229,22 @@ namespace NEO.mwherman2000.MonitorEvents
             foreach (Notification entry in notifications)
             {
                 foreach(object o in entry.Args)
-                {
-                    switch(o.GetType().ToString())
-                    {
-                        case "System.String":
-                            {
-                                Console.WriteLine($"{index}\t'{entry.Name}'\t'{(string)o}'");
-                                break;
-                            }
-                        case "System.Byte[]":
-                            {
-                                Console.WriteLine($"{index}\t'{entry.Name}'\t'{Helpers.ToHex((byte[])o)}'\t{Encoding.ASCII.GetString((byte[])o)}");
-                                break;
-                            }
-                        default:
-                            {
-                                Console.WriteLine($"{index}\t'{entry.Name}'...");
-                                Console.WriteLine($"{o.GetType().ToString()}\t{JsonConvert.SerializeObject(o)}");
-                                break;
-                            }
-                    }
+                {   
+                    if (o is System.String)
+                        {
+                            Console.WriteLine($"{index}\t'{entry.Name}'\t'{(string)o}'");
+                            break;
+                        }
+                    else if (o is System.Byte[])
+                        {
+                            Console.WriteLine($"{index}\t'{entry.Name}'\t'{Helpers.ToHex((byte[])o)}'\t{Encoding.ASCII.GetString((byte[])o)}");
+                            break;
+                        }
+                    else
+                        {
+                            Console.WriteLine($"{index}\t'{entry.Name}'\t{JsonConvert.SerializeObject(o)}");
+                            break;
+                        }
                 }
                 index++;
             }
