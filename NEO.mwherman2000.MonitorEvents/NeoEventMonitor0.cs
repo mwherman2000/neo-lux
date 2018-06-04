@@ -12,9 +12,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+// https://github.com/bluzelle/neo/blob/master/BluzelleBridge/Core/BridgeManager.cs
+
 namespace NEO.mwherman2000.MonitorEvents
 {
-    public class NeoEventMonitor : IBlockchainProvider
+    public class NeoEventMonitor0 : IBlockchainProvider
     {
         private NeoAPI _api;
         private bool _running;
@@ -23,7 +25,7 @@ namespace NEO.mwherman2000.MonitorEvents
         private SnapshotVM _listenerVM;
         private Dictionary<UInt256, Transaction> _transactions = new Dictionary<UInt256, Transaction>();
 
-        public NeoEventMonitor(NeoAPI api)
+        public NeoEventMonitor0(NeoAPI api)
         {
             this._api = api;
 

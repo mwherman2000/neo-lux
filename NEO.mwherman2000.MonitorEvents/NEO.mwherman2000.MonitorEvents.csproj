@@ -45,9 +45,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NeoEventMonitor.cs" />
+    <Compile Include="NeoEventMonitor1.cs" />
+    <Compile Include="NeoEventMonitor0.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Helpers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

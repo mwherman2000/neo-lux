@@ -376,6 +376,11 @@ namespace Neo.Lux.Core
                 return item.GetByteArray();
             }
             else
+            if (item is VM.Types.Array)
+            {
+                return item.GetByteArray();
+            }
+            else
             if (item is VM.Types.Integer)
             {
                 return item.GetByteArray();

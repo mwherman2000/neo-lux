@@ -52,25 +52,38 @@ namespace Neo.Lux.Core
 
         public bool Runtime_Log(ExecutionEngine engine)
         {
+            Console.WriteLine("Runtime_Log...");
+
             var msg = engine.EvaluationStack.Pop();
-            string eventName = JsonConvert.SerializeObject(msg);
-            var eventArgs = new List<object>();
 
-            List<Notification> list;
-            var tx = (Transaction)engine.ScriptContainer;
-
-            if (notifications.ContainsKey(tx.Hash))
+            if (msg != null)
             {
-                list = notifications[tx.Hash];
+                string sMsg = msg.GetString();
+
+                var eventArgs = new List<object>();
+                eventArgs.Add(sMsg);
+
+                List<Notification> list;
+                var tx = (Transaction)engine.ScriptContainer;
+
+                if (notifications.ContainsKey(tx.Hash))
+                {
+                    list = notifications[tx.Hash];
+                }
+                else
+                {
+                    list = new List<Notification>();
+                    notifications[tx.Hash] = list;
+                }
+
+                list.Add(new Notification(tx.Hash, "Runtime_Log", eventArgs.ToArray()));
+
+                return true;
             }
             else
             {
-                list = new List<Notification>();
-                notifications[tx.Hash] = list;
+                return false;
             }
-
-            list.Add(new Notification(tx.Hash, eventName, eventArgs.ToArray()));
-            return true;
         }
 
         private static T GetInteropFromStack<T>(ExecutionEngine engine) where T : class, IInteropInterface
@@ -260,6 +273,8 @@ namespace Neo.Lux.Core
 
         private bool Runtime_Notify(ExecutionEngine engine)
         {
+            Console.WriteLine("Runtime_Notify...");
+
             var something = engine.EvaluationStack.Pop();
 
             if (something is ICollection)
@@ -312,7 +327,7 @@ namespace Neo.Lux.Core
         {
             UInt160 scriptHash = script.ToScriptHash();
             scripts[scriptHash] = script;
-            Console.WriteLine($"AddScript: scriptHash {scriptHash.ToString()} has {script.Length} bytes"); ;
+            Console.WriteLine($"AddScript: scriptHash {scriptHash.ToString()} has {script.Length} bytes: {script.ToHexString()}"); ;
             storage[scriptHash] = new Storage();
         }
 
