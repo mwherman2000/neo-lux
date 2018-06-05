@@ -55,7 +55,6 @@ namespace NEO.mwherman2000.MonitorEvents
                     }
                 }
             }
-            return;
         }
 
         public void Stop()
@@ -66,11 +65,11 @@ namespace NEO.mwherman2000.MonitorEvents
             }
         }
 
-        public void Run()
+        public bool Run()
         {
             if (_running)
             {
-                return;
+                return true;
             }
             this._running = true;
 
@@ -108,6 +107,8 @@ namespace NEO.mwherman2000.MonitorEvents
                 Thread.Sleep(30 * 1000);
                 blockHeight = _api.GetBlockHeight();
             } while (_running);
+
+            return true;
         }
 
         private bool ProcessIncomingBlock(uint height)
@@ -123,7 +124,7 @@ namespace NEO.mwherman2000.MonitorEvents
 
             foreach (var tx in block.transactions)
             {
-                Console.WriteLine($"{height} Processing tx {tx.Hash}...");
+                //Console.WriteLine($"{height} Processing tx {tx.Hash}...");
 
                 //if (tx.type != TransactionType.InvocationTransaction)
                 //{
@@ -181,7 +182,6 @@ namespace NEO.mwherman2000.MonitorEvents
                             index--;
                             if (txScript[index].data != null)
                             {
-                                index--;
                                 args.Add(txScript[index].data);
                                 Console.WriteLine($"arg: index {index} value {txScript[index].data.ToHexString()}");
                             }

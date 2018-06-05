@@ -922,7 +922,9 @@ namespace Neo.Lux.Core
                 {
                     if (response != null && response.HasNode("error"))
                     {
+
                         var error = response["error"];
+                        Console.WriteLine($"QueryRPC: error `{error.GetString("message")}'");
                         Logger("RPC Error: " + error.GetString("message"));
                     }
                     else
@@ -934,7 +936,7 @@ namespace Neo.Lux.Core
                 }
 
             } while (retryCount < 10);
-
+            Console.WriteLine($"QueryRPC: retryCount: {retryCount}");
             return null;
         }
 

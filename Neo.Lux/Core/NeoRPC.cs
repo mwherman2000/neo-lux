@@ -1,6 +1,7 @@
 ﻿using LunarParser;
 using Neo.Lux.Cryptography;
 using Neo.Lux.Utils;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -124,7 +125,9 @@ namespace Neo.Lux.Core
         public bool SendRawTransaction(string hexTx)
         {
             var response = QueryRPC("sendrawtransaction", new object[] {hexTx });
+            Console.WriteLine($"SendRawTransaction: {JsonConvert.SerializeObject(response)}");
             var result = response.GetBool("result");
+            Console.WriteLine($"SendRawTransaction: {result}");
             return result;
         }
 

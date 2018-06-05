@@ -152,7 +152,7 @@ namespace NEO.mwherman2000.DeployTest2
 
         private static void LocalLogger(string s)
         {
-            Console.WriteLine($"LOGGER: '{s}'");
+            Console.WriteLine($"LOCALLOGGER: '{s}'");
         }
 
         private static string ToHex(string buffer)
