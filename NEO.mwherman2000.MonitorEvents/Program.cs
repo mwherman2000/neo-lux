@@ -22,14 +22,14 @@ namespace NEO.mwherman2000.MonitorEvents
         {
             const string demoPrivateKeyHex = "a9e2b5436cab6ff74be2d5c91b8a67053494ab5b454ac2851f872fb0fd30ba5e";
 
-            const string my0Address = "AaLLC7svH3D117BUbCejPDSVmQqWsPDx3P";
-            const string my0PublicKey = "02ad750a0a9d0ff45909de5f4ec7ee7eb679572f401f6b876ced386d763d28865d";
-            const string my0PrivateKeyHex = "a16dc73091555ead9bf495611662411e6c4921e439c326f81d054b2cf85d64f5";
-            const string my0PrivateKeyWIF = "L2dWPCDeD2uPfTaHw5urGeYUCugkPETCWweyKmdvwggixKG9Qqf3";
+            const string my0Address = "ALa8ALaySEH4x3Tnar7s1mWroXLnfBpz7c";
+            const string my0PublicKey = "0218c0e56e77a7fdf848da36676e6f296be4d4f17a267d86fd21b81dd31eb8595a";
+            const string my0PrivateKeyHex = "a626b73b3eb8e4779c48565bb8831585215a32d086f8cdf79445ef193cfe9cb6";
+            const string my0PrivateKeyWIF = "L2ngotEv1KPmTEkMJmxLbQAUp4VfAC2SvXTX1ZQ8juZyqWPkh3BA";
 
             string deployScriptHashHex = "0xf036ad1b59f21c09e3247fd5acb3bc73669547d2";
-            string deployTxHashHex = "0xb6fc8de574c2d6b2e77f592efe4bd7c82ec0682bf255b91f61754543b9730375";
-            string invokeTxHashHex = "0xf983108d2581ca7499118c219fde3c90f55cbb114200b8e3e31e39d1ce6614d9";
+            string deployTxHashHex = "0x67caaed7e4ebdc8dfe1314ad2d31913d0041037efbba5edd129bfc41ec58dadc";
+            string invokeTxHashHex = "0xb32b58c2b662022f237b651a0baf483fb67e479ebf4d23b42f40ba3099b86526";
 
             //const string my0Address = "AN3LHQcpvwAfJAHk6DvzHyFxHr4KcY5mdA";
             //const string my0PrivateKeyHex = "13c5ae3e47d1e1421c2adb620ee134457590e9ba19f5f891d19c183b0d06d521";
@@ -135,23 +135,38 @@ namespace NEO.mwherman2000.MonitorEvents
             //    Console.WriteLine(JsonConvert.SerializeObject(entry));
             //}
 
-            var oldLogger = _api.Logger;
-            _api.SetLogger(LocalLogger);
             for (int time = 0; time < 10; time++)
             {
-                uint blockheight = _api.GetBlockHeight();
-                Console.WriteLine($"blockheight: {blockheight}");
-                while (_api.GetBlock(blockheight) == null) { Console.WriteLine("...waiting..."); Thread.Sleep(10000); }
-                Thread.Sleep(10000);
-                Console.WriteLine($"blockheight: {blockheight} found");
-
+                var oldLogger = _api.Logger;
+                _api.SetLogger(LocalLogger);
                 Console.WriteLine($"#### START {time} calltx");
                 string operation = "testcallcontract";
                 object[] callargs = { 1024+time, 1024+time+1, 1024+time+2 };
                 Transaction calltx = _api.CallContract(my0Keys, UInt160.Parse(deployScriptHashHex), operation, callargs);
                 Console.WriteLine($"#### END   {time} calltx\t{JsonConvert.SerializeObject(calltx)}");
+                _api.SetLogger(oldLogger);
+                if (calltx != null)
+                {
+                    //var oldLogger2 = _api.Logger;
+                    //_api.SetLogger(LocalLogger);
+                    DateTime dtStart = DateTime.Now;
+                    Console.WriteLine($"#### Waiting {time} calltx {dtStart.ToString()}");
+                    _api.WaitForTransaction(my0Keys, calltx);
+                    DateTime dtEnd= DateTime.Now;
+                    Console.WriteLine($"#### Completed {time} calltx {dtEnd.ToString()}");
+                    TimeSpan elapsed = (dtEnd.Subtract(dtStart));
+                    Console.WriteLine($"#### Completed {time} calltx {elapsed.TotalSeconds}");
+                    //_api.SetLogger(oldLogger2);
+                }
+                else
+                {
+                    uint blockheight = _api.GetBlockHeight();
+                    Console.WriteLine($"blockheight: {blockheight}");
+                    while (_api.GetBlock(blockheight) == null) { Console.WriteLine("...waiting..."); Thread.Sleep(10000); }
+                    Thread.Sleep(10000);
+                    Console.WriteLine($"blockheight: {blockheight} found");
+                }
             }
-            _api.SetLogger(oldLogger);
 
             Console.WriteLine("Waiting for task...");
             //monitor.Wait();

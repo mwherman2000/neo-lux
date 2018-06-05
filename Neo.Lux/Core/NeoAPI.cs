@@ -135,7 +135,8 @@ namespace Neo.Lux.Core
 
         // TODO NEP5 should be refactored to be a data object without the embedded api
 
-        public struct TokenInfo {
+        public struct TokenInfo
+        {
             public string symbol;
             public string hash;
             public string name;
@@ -157,9 +158,9 @@ namespace Neo.Lux.Core
                 AddToken("TKY", "132947096727c84c7f9e076c90f08fec3bc17f18", "TheKey", 8);
                 AddToken("TNC", "08e8c4400f1af2c20c28e0018f29535eb85d15b6", "Trinity", 8);
                 AddToken("CPX", "45d493a6f73fa5f404244a5fb8472fc014ca5885", "APEX", 8);
-                AddToken("ACAT","7f86d61ff377f1b12e589a5907152b57e2ad9a7a", "ACAT", 8);
+                AddToken("ACAT", "7f86d61ff377f1b12e589a5907152b57e2ad9a7a", "ACAT", 8);
                 AddToken("NRV", "a721d5893480260bd28ca1f395f2c465d0b5b1c2", "Narrative", 8);
-                AddToken("THOR","67a5086bac196b67d5fd20745b0dc9db4d2930ed", "Thor", 8);
+                AddToken("THOR", "67a5086bac196b67d5fd20745b0dc9db4d2930ed", "Thor", 8);
                 AddToken("RHT", "2328008e6f6c7bd157a342e789389eb034d9cbc4", "HashPuppy", 0);
                 AddToken("IAM", "891daf0e1750a1031ebe23030828ad7781d874d6", "BridgeProtocol", 8);
                 AddToken("SHW", "78e6d16b914fe15bc16150aeb11d0c2a8e532bdd", "Switcheo", 8);
@@ -364,7 +365,7 @@ namespace Neo.Lux.Core
                     var item = items.Pop();
                     EmitObject(sb, item);
                 }
-                
+
                 sb.EmitAppCall(scriptHash, false);
 
                 if (addNonce)
@@ -395,7 +396,7 @@ namespace Neo.Lux.Core
         }
 
         public void GenerateInputsOutputs(UInt160 from_script_hash, string symbol, IEnumerable<Transaction.Output> targets, out List<Transaction.Input> inputs, out List<Transaction.Output> outputs, decimal system_fee = 0)
-        {           
+        {
             var unspent = GetUnspent(from_script_hash);
             // filter any asset lists with zero unspent inputs
             unspent = unspent.Where(pair => pair.Value.Count > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -438,7 +439,7 @@ namespace Neo.Lux.Core
             }
 
             var targetAssetID = LuxUtils.ReverseHex(assetID).HexToBytes();
-            
+
             var sources = unspent[symbol];
             decimal selected = 0;
 
@@ -491,7 +492,7 @@ namespace Neo.Lux.Core
                 throw new NeoException($"Not enough {symbol}");
             }
 
-            if(cost > 0 && targets != null)
+            if (cost > 0 && targets != null)
             {
                 foreach (var target in targets)
                 {
@@ -550,7 +551,7 @@ namespace Neo.Lux.Core
 
             if (attachTargets == null)
             {
-                attachTargets = new List<Transaction.Output>();                
+                attachTargets = new List<Transaction.Output>();
             }
 
             GenerateInputsOutputs(key, attachSymbol, attachTargets, out inputs, out outputs);
@@ -715,7 +716,7 @@ namespace Neo.Lux.Core
                 references.Add(new Transaction.Input() { prevHash = entry.hash, prevIndex = entry.index });
             }
 
-            if (amount <=0)
+            if (amount <= 0)
             {
                 throw new ArgumentException("No GAS to claim at this address");
             }
@@ -740,7 +741,7 @@ namespace Neo.Lux.Core
                 gas = -1,
                 references = references.ToArray(),
                 inputs = inputs.ToArray(),
-                outputs =outputs.ToArray(),
+                outputs = outputs.ToArray(),
             };
 
             var witness = new Witness { invocationScript = ("0014" + ownerKey.address.AddressToScriptHash().ByteToHex()).HexToBytes(), verificationScript = verificationScript };
@@ -848,7 +849,7 @@ namespace Neo.Lux.Core
 
         public abstract List<UnspentEntry> GetClaimable(UInt160 hash, out decimal amount);
 
-        public abstract Dictionary<string, List<UnspentEntry>> GetUnspent(UInt160 scripthash);        
+        public abstract Dictionary<string, List<UnspentEntry>> GetUnspent(UInt160 scripthash);
 
         public Dictionary<string, List<UnspentEntry>> GetUnspent(string address)
         {
@@ -1022,42 +1023,59 @@ namespace Neo.Lux.Core
                 throw new ArgumentNullException();
             }
 
-            uint newBlock;
+            uint currentBlock = oldBlock;
+            uint blockHeight = GetBlockHeight();
 
-            do
+            int batchRetries = 0;
+            bool foundTx = false;
+            do // a batch of blocks: from currentBlock to blockHeight
             {
-                Thread.Sleep(5000);
-                newBlock = GetBlockHeight();
-            } while (newBlock == oldBlock);
-
-            while (oldBlock < newBlock)
-            {
-                var other = GetBlock(oldBlock);
-
-                if (other != null)
+                int blockRetries = 0;
+                while (currentBlock <= blockHeight) // for each block in this batch
                 {
-                    foreach (var entry in other.transactions)
+                    Block b = GetBlock(currentBlock);
+                    while (b == null)
                     {
-                        if (entry.Hash == tx.Hash)
+                        blockRetries++;
+                        if (blockRetries > 10)
                         {
-                            oldBlock = newBlock;
+                            Console.WriteLine($"Too many retries: skipping block {currentBlock}...");
+                            blockRetries = 0;
                             break;
                         }
+
+                        Console.WriteLine($"Waiting for block... retry {blockRetries}");
+                        Thread.Sleep(5 * 1000);
+                        b = GetBlock(currentBlock);
                     }
-
-                    oldBlock++;
-                }
-                else
-                {
-                    Thread.Sleep(5000);
+                    if (b != null) foundTx = FoundTxInBlock(b, tx);
+                    if (foundTx) break;
+                    currentBlock++;
                 }
 
-            }
+                if (foundTx) break;
+
+                batchRetries++;
+                if (batchRetries > 10) break;
+
+                Console.WriteLine($"Waiting for next batch...");
+                Thread.Sleep(5 * 1000);
+                blockHeight = GetBlockHeight();
+            } while (true);
 
             lastTransactions[keys.address] = tx;
         }
 
-
+        private bool FoundTxInBlock(Block b, Transaction tx)
+        {
+            foreach (var txInBlock in b.transactions)
+            {
+                if (txInBlock.Hash == tx.Hash)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
-
 }
